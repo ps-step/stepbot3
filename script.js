@@ -2,39 +2,33 @@
 
 // --- CONFIGURATION & DATA ---
 
-// Placeholder for Grade Boundaries (S, 1, 2, 3)
 const GRADE_BOUNDARIES = {
-    // Structure: Year: { Paper2: [S, 1, 2, 3], Paper3: [S, 1, 2, 3] }
-    // Filled with dummy 0s for now as requested
+    // Placeholder
     2008: { 2: [0,0,0,0], 3: [0,0,0,0] },
-    2009: { 2: [0,0,0,0], 3: [0,0,0,0] },
-    // ... You can populate this later
 };
 
 // Global state
 let allQuestions = [];
 let userProgress = JSON.parse(localStorage.getItem('stepTrackerData')) || {};
+let currentQuestionId = null;
+let timerInterval = null;
+let secondsElapsed = 0;
 
 // Initialize
 window.onload = function() {
     generateQuestionList();
     renderTable();
-    loadFilters(); // Populate dropdowns
+    loadFilters(); 
 };
 
 // --- LOGIC ---
 
 function getQuestionType(year, number) {
-    // Logic for Pure (Always 1-8)
     if (number <= 8) return 'pure';
-
-    // Logic for 2008-2017
     if (year <= 2017) {
         if (number >= 9 && number <= 11) return 'mechanics';
         if (number >= 12 && number <= 13) return 'stats';
-    } 
-    // Logic for 2018-2024
-    else {
+    } else {
         if (number >= 9 && number <= 10) return 'mechanics';
         if (number >= 11 && number <= 12) return 'stats';
     }
@@ -47,12 +41,11 @@ function generateQuestionList() {
     
     for (let year = 2008; year <= 2024; year++) {
         papers.forEach(paper => {
-            // Determine max questions for that year
             let maxQ = (year <= 2017) ? 13 : 12;
 
             for (let num = 1; num <= maxQ; num++) {
                 const type = getQuestionType(year, num);
-                const id = `${year}.${paper}.${num}`; // Unique ID
+                const id = `${year}.${paper}.${num}`; 
                 
                 allQuestions.push({
                     id: id,
@@ -60,8 +53,7 @@ function generateQuestionList() {
                     paper: paper,
                     number: num,
                     type: type,
-                    topic: 'pure', // Default placeholder
-                    filename: `${id}.png` // Matches your naming convention
+                    filename: `${id}.png`
                 });
             }
         });
@@ -71,7 +63,6 @@ function generateQuestionList() {
 // --- UI FUNCTIONS ---
 
 function loadFilters() {
-    // Populate "Select Specific" dropdowns
     const yearSelect = document.getElementById('sel-year');
     for(let y=2008; y<=2024; y++) {
         let opt = document.createElement('option');
@@ -81,14 +72,12 @@ function loadFilters() {
 }
 
 function generateRandom() {
-    // 1. Get User Filters
     const allowP2 = document.getElementById('chk-p2').checked;
     const allowP3 = document.getElementById('chk-p3').checked;
     const allowPure = document.getElementById('chk-pure').checked;
     const allowMech = document.getElementById('chk-mech').checked;
     const allowStats = document.getElementById('chk-stats').checked;
 
-    // 2. Filter the Master List
     const eligible = allQuestions.filter(q => {
         if (q.paper === 2 && !allowP2) return false;
         if (q.paper === 3 && !allowP3) return false;
@@ -103,11 +92,8 @@ function generateRandom() {
         return;
     }
 
-    // 3. Pick Random
     const randomIndex = Math.floor(Math.random() * eligible.length);
-    const selected = eligible[randomIndex];
-
-    displayQuestion(selected);
+    displayQuestion(eligible[randomIndex]);
 }
 
 function loadSpecific() {
@@ -125,18 +111,47 @@ function loadSpecific() {
 }
 
 function displayQuestion(q) {
-    // Update Info Text
-    const info = `Year: ${q.year} | Paper: ${q.paper} | Q${q.number} (${q.type})`;
+    currentQuestionId = q.id;
+    
+    // 1. Update Info Text (Removed Topic)
+    // Display Roman Numerals for Paper
+    const paperLabel = (q.paper === 2) ? "II" : "III";
+    const info = `Year: ${q.year} | Paper: ${paperLabel} | Question ${q.number}`;
     document.getElementById('question-info').innerText = info;
 
-    // Update Image
-    // Assumes images are in a folder named 'questions' relative to index.html
+    // 2. Update Image
     const imgPath = `questions/${q.filename}`; 
     document.getElementById('question-img').src = imgPath;
-    document.getElementById('question-img').alt = `STEP Question ${q.id}`;
+    document.getElementById('question-img').alt = `STEP ${q.year} ${paperLabel} Q${q.number}`;
 
-    // Store current question ID in button for marking
-    document.getElementById('btn-mark-done').dataset.currentId = q.id;
+    // 3. Show Controls
+    document.getElementById('viewer-controls').style.display = 'block';
+
+    // 4. Sync Viewer Inputs with Data
+    const data = userProgress[q.id] || { marks: '', notes: '' };
+    document.getElementById('viewer-marks').value = data.marks;
+    document.getElementById('viewer-notes').value = data.notes;
+
+    // 5. Reset and Start Timer
+    startTimer();
+}
+
+// --- TIMER LOGIC ---
+function startTimer() {
+    clearInterval(timerInterval);
+    secondsElapsed = 0;
+    updateTimerDisplay();
+    
+    timerInterval = setInterval(() => {
+        secondsElapsed++;
+        updateTimerDisplay();
+    }, 1000);
+}
+
+function updateTimerDisplay() {
+    const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+    const secs = (secondsElapsed % 60).toString().padStart(2, '0');
+    document.getElementById('timer').innerText = `${mins}:${secs}`;
 }
 
 // --- TRACKER & SAVING ---
@@ -152,17 +167,25 @@ function renderTable() {
         const data = userProgress[q.id] || { done: false, date: '', marks: '', notes: '' };
         
         const tr = document.createElement('tr');
+        if (data.done) tr.style.backgroundColor = "#e8f8f5"; // Slight green tint for done
+
+        // Distinct Name: 2017 II Q12
+        const paperRoman = (q.paper === 2) ? "II" : "III";
+        const displayName = `${q.year} ${paperRoman} Q${q.number}`;
         
-        // Checkbox
-        const tdCheck = `<td><input type="checkbox" ${data.done ? 'checked' : ''} onchange="updateProgress('${q.id}', 'done', this.checked)"></td>`;
+        // HTML Generation
+        const tdCheck = `<td class="col-check"><input type="checkbox" ${data.done ? 'checked' : ''} onchange="updateProgress('${q.id}', 'done', this.checked)"></td>`;
+        const tdName = `<td class="col-id">${displayName}</td>`;
+        const tdDate = `<td class="col-date"><input type="date" value="${data.date}" onchange="updateProgress('${q.id}', 'date', this.value)"></td>`;
+        const tdMarks = `<td class="col-marks"><input type="number" value="${data.marks}" onchange="updateProgress('${q.id}', 'marks', this.value)"></td>`;
         
-        // ID
-        const tdName = `<td>${q.year} II/III Q${q.number}</td>`;
-        
-        // Inputs
-        const tdDate = `<td><input type="date" value="${data.date}" onchange="updateProgress('${q.id}', 'date', this.value)"></td>`;
-        const tdMarks = `<td><input type="number" style="width:50px" value="${data.marks}" onchange="updateProgress('${q.id}', 'marks', this.value)"></td>`;
-        const tdNotes = `<td><input type="text" value="${data.notes}" onchange="updateProgress('${q.id}', 'notes', this.value)"></td>`;
+        // Expanding Textarea Logic
+        const tdNotes = `
+            <td class="col-notes">
+                <div class="note-cell">
+                    <textarea class="note-input" placeholder="Notes..." onchange="updateProgress('${q.id}', 'notes', this.value)">${data.notes}</textarea>
+                </div>
+            </td>`;
 
         tr.innerHTML = tdCheck + tdName + tdDate + tdMarks + tdNotes;
         tbody.appendChild(tr);
@@ -177,19 +200,48 @@ function updateProgress(id, field, value) {
     
     // Save to LocalStorage
     localStorage.setItem('stepTrackerData', JSON.stringify(userProgress));
+
+    // If we updated the Table, and the Question is currently open in Viewer, update Viewer inputs
+    if (id === currentQuestionId) {
+        if (field === 'marks') document.getElementById('viewer-marks').value = value;
+        if (field === 'notes') document.getElementById('viewer-notes').value = value;
+    }
+}
+
+// Sync from Viewer Inputs -> Data -> Table
+function syncViewerToData() {
+    if (!currentQuestionId) return;
+    
+    const marks = document.getElementById('viewer-marks').value;
+    const notes = document.getElementById('viewer-notes').value;
+    
+    // Update Data
+    if (!userProgress[currentQuestionId]) userProgress[currentQuestionId] = { done: false, date: '' };
+    userProgress[currentQuestionId].marks = marks;
+    userProgress[currentQuestionId].notes = notes;
+    
+    localStorage.setItem('stepTrackerData', JSON.stringify(userProgress));
+    
+    // Simpler to just re-render table to ensure consistency
+    renderTable(); 
 }
 
 function markCurrentAsDone() {
-    const id = document.getElementById('btn-mark-done').dataset.currentId;
-    if(!id) return;
+    if(!currentQuestionId) return;
     
-    updateProgress(id, 'done', true);
-    // Set today's date if empty
-    if (!userProgress[id].date) {
-        updateProgress(id, 'date', new Date().toISOString().split('T')[0]);
+    // Mark Done
+    updateProgress(currentQuestionId, 'done', true);
+    
+    // Set Date if empty
+    if (!userProgress[currentQuestionId].date) {
+        updateProgress(currentQuestionId, 'date', new Date().toISOString().split('T')[0]);
     }
-    renderTable(); // Refresh table to show check
-    alert(`Marked ${id} as done!`);
+
+    // Save Marks/Notes currently in viewer
+    syncViewerToData();
+    
+    renderTable();
+    alert(`Marked ${currentQuestionId} as complete!`);
 }
 
 function showMarkScheme() {
