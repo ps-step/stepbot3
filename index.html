@@ -1,18 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>STEP Tracker</title>
-    <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; background-color: #f0f0f0; }
-        .container { background: white; padding: 20px; border-radius: 8px; max-width: 600px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { color: #333; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>STEP Exam Tracker</h1>
-        <p>Welcome to my progress tracking app.</p>
-        <p><em>Coming soon...</em></p>
-    </div>
+
+    <header>
+        <div style="font-weight: bold; font-size: 1.2em;">STEP Exam Tracker</div>
+        
+        <div class="controls">
+            <div style="border-right: 1px solid #aaa; padding-right: 10px; display:flex; gap:10px; align-items:center;">
+                <label><input type="checkbox" id="chk-p2" checked> P2</label>
+                <label><input type="checkbox" id="chk-p3" checked> P3</label>
+                <span style="color:#aaa">|</span>
+                <label><input type="checkbox" id="chk-pure" checked> Pure</label>
+                <label><input type="checkbox" id="chk-mech" checked> Mech</label>
+                <label><input type="checkbox" id="chk-stats" checked> Stats</label>
+                <button class="primary" onclick="generateRandom()">Random Q</button>
+            </div>
+
+            <div>
+                <select id="sel-year"></select>
+                <select id="sel-paper">
+                    <option value="2">Paper 2</option>
+                    <option value="3">Paper 3</option>
+                </select>
+                <select id="sel-number">
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                    <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+                    <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+                    <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+                    <option value="13">13</option>
+                </select>
+                <button class="secondary" onclick="loadSpecific()">Go</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div id="viewer-panel">
+            <div id="question-info">Select a question to begin</div>
+            <img id="question-img" src="" alt="Question Image will appear here" onerror="this.style.display='none'" onload="this.style.display='block'">
+            
+            <div class="action-bar">
+                <button id="btn-mark-done" class="primary" onclick="markCurrentAsDone()">Mark Complete</button>
+                <button class="secondary" onclick="showMarkScheme()">Mark Scheme</button>
+            </div>
+        </div>
+
+        <div id="tracker-panel">
+            <h3>Progress Tracker</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>✓</th>
+                        <th>Question</th>
+                        <th>Date</th>
+                        <th>Marks</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody id="tracker-body">
+                    </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
 </body>
 </html>
