@@ -14,6 +14,8 @@
             <div class="mode-tabs">
                 <button id="tab-practice" class="mode-btn active" onclick="switchMode('practice')">Practice Mode</button>
                 <button id="tab-mock" class="mode-btn" onclick="switchMode('mock')">Mock Exam</button>
+                <button id="tab-info" class="mode-btn" onclick="switchMode('info')">Information</button>
+                <button id="tab-advice" class="mode-btn" onclick="switchMode('advice')">Advice</button>
             </div>
         </div>
         
@@ -111,7 +113,8 @@
                         <tr>
                             <th class="col-check">✓</th>
                             <th class="col-id">Question</th>
-                            <th class="col-topic">Topic</th> <th class="col-date">Date</th>
+                            <th class="col-topic">Topic</th>
+                            <th class="col-date">Date</th>
                             <th class="col-marks">Marks</th>
                             <th class="col-notes">Notes</th>
                         </tr>
@@ -121,6 +124,49 @@
                 </table>
             </div>
         </div>
+
+        <div id="info-panel" class="text-panel" style="display:none;">
+            <div class="text-content">
+                <h2>About StepBot3</h2>
+                <p>StepBot3 is a comprehensive revision tool designed to help students prepare for STEP 2 and STEP 3 examinations.</p>
+                
+                <h3>Features</h3>
+                <ul>
+                    <li><strong>Question Database:</strong> Access past paper questions from 2008 to 2024.</li>
+                    <li><strong>Practice Mode:</strong> Filter questions by Paper, Type (Pure, Mechanics, Stats), and Topic to practice specific skills.</li>
+                    <li><strong>Mock Mode:</strong> Generate timed mock papers consisting of 12 questions (8 Pure, 2 Mech, 2 Stats) from a specific year range.</li>
+                    <li><strong>Progress Tracking:</strong> Marks questions as complete, logs your scores, and saves your notes automatically to your browser's local storage.</li>
+                    <li><strong>Mark Schemes:</strong> View PDF mark schemes directly within the app.</li>
+                </ul>
+                
+                <p><em>Note: All data is stored locally on your device. Clearing your browser cache may remove your progress.</em></p>
+            </div>
+        </div>
+
+        <div id="advice-panel" class="text-panel" style="display:none;">
+            <div class="text-content">
+                <h2>STEP Advice & Tips</h2>
+                <p>Here are some resources and strategies to help you succeed.</p>
+
+                <h3>Useful Links</h3>
+                <ul>
+                    <li>
+                        <a href="https://maths.org/step/welcome" target="_blank">STEP Support Programme</a> 
+                        - Official support from the University of Cambridge.
+                    </li>
+                    <li>
+                        <a href="https://www.thestudentroom.co.uk/" target="_blank">The Student Room</a> 
+                        - Great community for discussing specific questions.
+                    </li>
+                </ul>
+
+                <h3>General Strategy</h3>
+                <p><strong>1. Don't Panic:</strong> STEP questions are designed to be difficult. Getting stuck is part of the process.</p>
+                <p><strong>2. Presentation:</strong> Write clear, logical steps. Examiners award marks for method even if the final answer is wrong.</p>
+                <p><strong>3. Time Management:</strong> In the exam, don't spend too long on a question that isn't going anywhere. Move on and come back later.</p>
+            </div>
+        </div>
+
     </main>
 
     <div id="modal-backdrop" class="modal-backdrop" onclick="closeModal()">

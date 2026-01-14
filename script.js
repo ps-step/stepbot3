@@ -221,16 +221,47 @@ function generateQuestionList() {
 function switchMode(mode) {
     currentMode = mode;
     
-    document.getElementById('tab-practice').classList.toggle('active', mode === 'practice');
-    document.getElementById('tab-mock').classList.toggle('active', mode === 'mock');
+    // 1. Update Tab Buttons (Remove active class from all, add to current)
+    document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`tab-${mode}`).classList.add('active');
 
-    document.getElementById('controls-practice').style.display = (mode === 'practice') ? 'flex' : 'none';
-    document.getElementById('controls-mock').style.display = (mode === 'mock') ? 'flex' : 'none';
+    // 2. Hide ALL specific Controls first
+    document.getElementById('controls-practice').style.display = 'none';
+    document.getElementById('controls-mock').style.display = 'none';
 
-    const title = (mode === 'practice') ? "All Questions" : "Mock Exam (12 Questions)";
-    document.getElementById('tracker-title').innerText = title;
+    // 3. Hide ALL Panels first
+    document.getElementById('viewer-panel').style.display = 'none';
+    document.getElementById('tracker-panel').style.display = 'none';
+    document.getElementById('info-panel').style.display = 'none';
+    document.getElementById('advice-panel').style.display = 'none';
 
-    renderTable();
+    // 4. Show based on Mode
+    if (mode === 'practice') {
+        // Show Practice UI
+        document.getElementById('controls-practice').style.display = 'flex';
+        document.getElementById('viewer-panel').style.display = 'flex';
+        document.getElementById('tracker-panel').style.display = 'flex';
+        
+        document.getElementById('tracker-title').innerText = "All Questions";
+        renderTable();
+    } 
+    else if (mode === 'mock') {
+        // Show Mock UI
+        document.getElementById('controls-mock').style.display = 'flex';
+        document.getElementById('viewer-panel').style.display = 'flex';
+        document.getElementById('tracker-panel').style.display = 'flex';
+        
+        document.getElementById('tracker-title').innerText = "Mock Exam (12 Questions)";
+        renderTable();
+    } 
+    else if (mode === 'info') {
+        // Show Info Text Only
+        document.getElementById('info-panel').style.display = 'flex';
+    } 
+    else if (mode === 'advice') {
+        // Show Advice Text Only
+        document.getElementById('advice-panel').style.display = 'flex';
+    }
 }
 
 // --- MOCK GENERATION ---
