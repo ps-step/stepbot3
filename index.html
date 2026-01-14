@@ -60,7 +60,8 @@
                 <label><input type="checkbox" id="mock-p2" checked> P2</label>
                 <label><input type="checkbox" id="mock-p3" checked> P3</label>
                 
-                <button class="primary" style="background-color: #e67e22;" onclick="generateMock()">Generate Paper (12 Qs)</button>
+                <button class="primary" style="background-color: #e67e22;" onclick="generateMock()">Generate Paper</button>
+                <button class="secondary" onclick="viewGradeBoundaries()">View Grade Boundaries</button>
             </div>
         </div>
     </header>
@@ -114,6 +115,23 @@
             </div>
         </div>
     </main>
+
+    <div id="modal-backdrop" class="modal-backdrop" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Estimated Grade Boundaries</h3>
+                <span class="close-btn" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Based on the composition of your current mock paper:</p>
+                <div id="grade-display">
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>

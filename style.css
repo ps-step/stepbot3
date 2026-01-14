@@ -71,7 +71,7 @@ header {
     align-items: center;
     flex-wrap: wrap;
     padding: 10px 20px;
-    background-color: #2c3e50; /* Matches header */
+    background-color: #2c3e50;
     color: white;
     font-size: 0.9em;
     border-top: 1px solid rgba(255,255,255,0.1);
@@ -93,8 +93,8 @@ select, button, input[type="text"], input[type="number"] {
     border-radius: 4px;
     border: 1px solid #ccc;
     font-size: 0.9em;
-    box-sizing: border-box; /* Important for alignment */
-    height: 30px; /* Force consistent height */
+    box-sizing: border-box; 
+    height: 30px; 
     vertical-align: middle;
 }
 
@@ -102,7 +102,7 @@ button {
     cursor: pointer;
     border: none;
     transition: background 0.2s;
-    height: 30px; /* Match inputs */
+    height: 30px; 
     line-height: 1;
 }
 
@@ -246,7 +246,7 @@ th, td {
     border-bottom: 1px solid #eee;
     padding: 8px;
     text-align: left;
-    vertical-align: middle; /* Fixes alignment issue */
+    vertical-align: middle; 
 }
 
 th {
@@ -258,7 +258,6 @@ th {
     box-shadow: 0 2px 2px rgba(0,0,0,0.1);
 }
 
-/* Clickable Question Name */
 .clickable-name {
     color: #2980b9;
     font-weight: bold;
@@ -273,23 +272,22 @@ th {
 /* Column Widths */
 .col-check { width: 30px; text-align: center; }
 .col-id { width: 110px; }
-.col-date { width: 120px; } /* Slightly wider */
+.col-date { width: 120px; } 
 .col-marks { width: 60px; }
 .col-notes { width: auto; }
 
-/* Table Inputs - Height Fixes */
+/* Table Inputs */
 td input[type="date"],
 td input[type="number"] { 
     width: 100%; 
     padding: 2px 5px; 
-    height: 30px; /* Explicit height */
+    height: 30px; 
     box-sizing: border-box;
     border: 1px solid #ddd;
     border-radius: 3px;
     vertical-align: middle;
 }
 
-/* Expanding Notes */
 td { position: relative; } 
 
 .note-cell {
@@ -299,7 +297,7 @@ td { position: relative; }
 
 .note-input {
     width: 100%;
-    height: 30px; /* Match others */
+    height: 30px; 
     border: 1px solid #ddd;
     border-radius: 3px;
     padding: 4px;
@@ -325,3 +323,67 @@ td { position: relative; }
     border-color: #3498db;
     overflow-y: auto;
 }
+
+/* --- Modal Styles --- */
+.modal-backdrop {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: white;
+    width: 90%;
+    max-width: 400px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    overflow: hidden;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+    background-color: #2c3e50;
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 { margin: 0; }
+
+.close-btn {
+    font-size: 1.5em;
+    cursor: pointer;
+    line-height: 0.8;
+}
+
+.modal-body {
+    padding: 20px;
+    text-align: center;
+}
+
+.modal-footer {
+    padding: 10px 20px 20px;
+    text-align: center;
+}
+
+.grade-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 1.1em;
+}
+.grade-label { font-weight: bold; color: #7f8c8d; }
+.grade-value { font-weight: bold; color: #2c3e50; }

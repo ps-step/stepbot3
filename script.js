@@ -2,13 +2,56 @@
 
 // --- CONFIGURATION & DATA ---
 
+// Grade Boundaries Data (Source: Provided 2008-2024)
+const GRADE_DATA = {
+    // Paper 2
+    2: {
+        2024: {"S": 93, "1": 69, "2": 51, "3": 26},
+        2023: {"S": 90, "1": 65, "2": 50, "3": 30},
+        2022: {"S": 81, "1": 62, "2": 52, "3": 28},
+        2021: {"S": 92, "1": 67, "2": 54, "3": 25},
+        2020: {"S": 77, "1": 54, "2": 42, "3": 30},
+        2019: {"S": 90, "1": 68, "2": 55, "3": 36},
+        2018: {"S": 100, "1": 77, "2": 65, "3": 34},
+        2017: {"S": 101, "1": 80, "2": 69, "3": 31},
+        2016: {"S": 95, "1": 74, "2": 65, "3": 30},
+        2015: {"S": 94, "1": 68, "2": 60, "3": 30},
+        2014: {"S": 95, "1": 74, "2": 64, "3": 30},
+        2013: {"S": 100, "1": 79, "2": 67, "3": 32},
+        2012: {"S": 91, "1": 72, "2": 60, "3": 31},
+        2011: {"S": 83, "1": 62, "2": 49, "3": 29},
+        2010: {"S": 105, "1": 79, "2": 64, "3": 40},
+        2009: {"S": 98, "1": 71, "2": 61, "3": 39},
+        2008: {"S": 94, "1": 69, "2": 58, "3": 35}
+    },
+    // Paper 3
+    3: {
+        2024: {"S": 85, "1": 64, "2": 54, "3": 32},
+        2023: {"S": 82, "1": 62, "2": 51, "3": 29},
+        2022: {"S": 89, "1": 67, "2": 54, "3": 29},
+        2021: {"S": 92, "1": 67, "2": 54, "3": 25},
+        2020: {"S": 88, "1": 67, "2": 53, "3": 30},
+        2019: {"S": 77, "1": 57, "2": 48, "3": 27},
+        2018: {"S": 87, "1": 59, "2": 49, "3": 27},
+        2017: {"S": 95, "1": 69, "2": 57, "3": 28},
+        2016: {"S": 88, "1": 64, "2": 55, "3": 32},
+        2015: {"S": 88, "1": 65, "2": 54, "3": 29},
+        2014: {"S": 81, "1": 59, "2": 48, "3": 27},
+        2013: {"S": 85, "1": 62, "2": 48, "3": 27},
+        2012: {"S": 84, "1": 65, "2": 53, "3": 32},
+        2011: {"S": 91, "1": 65, "2": 53, "3": 32},
+        2010: {"S": 78, "1": 56, "2": 46, "3": 29},
+        2009: {"S": 95, "1": 67, "2": 55, "3": 38},
+        2008: {"S": 82, "1": 63, "2": 52, "3": 34}
+    }
+};
+
 // Global state
 let allQuestions = [];
 let userProgress = JSON.parse(localStorage.getItem('stepTrackerData')) || {};
 
 // Mock Data
 let currentMode = 'practice'; // 'practice' or 'mock'
-// Load existing mock from storage or empty array
 let currentMockIds = JSON.parse(localStorage.getItem('stepBotMockIds')) || []; 
 
 let currentQuestionId = null;
@@ -19,8 +62,6 @@ let secondsElapsed = 0;
 window.onload = function() {
     generateQuestionList();
     loadFilters(); // Populate dropdowns
-    
-    // Default to practice mode render
     renderTable(); 
 };
 
@@ -102,7 +143,7 @@ function generateMock() {
         return;
     }
 
-    // 2. Filter Pool: Must be in range, right paper, AND NOT DONE
+    // 2. Filter Pool
     let pool = allQuestions.filter(q => {
         if (q.year < startYear || q.year > endYear) return false;
         if (q.paper === 2 && !useP2) return false;
@@ -122,11 +163,11 @@ function generateMock() {
 
     // 4. Validate Counts
     if (pure.length < 8 || mech.length < 2 || stats.length < 2) {
-        alert(`Not enough uncompleted questions available in this range!\n\nAvailable:\nPure: ${pure.length} (Need 8)\nMech: ${mech.length} (Need 2)\nStats: ${stats.length} (Need 2)`);
+        alert(`Not enough uncompleted questions available!\n\nAvailable:\nPure: ${pure.length} (Need 8)\nMech: ${mech.length} (Need 2)\nStats: ${stats.length} (Need 2)`);
         return;
     }
 
-    // 5. Shuffle and Select (Helper Function)
+    // 5. Shuffle and Select
     function getRandomSubarray(arr, size) {
         let shuffled = arr.slice(0);
         let i = arr.length;
@@ -144,20 +185,70 @@ function generateMock() {
     const selectedMech = getRandomSubarray(mech, 2);
     const selectedStats = getRandomSubarray(stats, 2);
 
-    // 6. Combine and Save
     const mockSet = [...selectedPure, ...selectedMech, ...selectedStats];
-    
-    // Sort logic for display (Year -> Paper -> Number)
     mockSet.sort((a,b) => a.year - b.year || a.paper - b.paper || a.number - b.number);
 
     currentMockIds = mockSet.map(q => q.id);
-    
-    // Save to local storage so refresh doesn't kill the mock
     localStorage.setItem('stepBotMockIds', JSON.stringify(currentMockIds));
 
-    // Render
     renderTable();
     alert("Mock generated! Good luck.");
+}
+
+// --- GRADE BOUNDARIES ---
+
+function viewGradeBoundaries() {
+    if (currentMockIds.length === 0) {
+        alert("Please generate a mock paper first.");
+        return;
+    }
+
+    let sums = { "S": 0, "1": 0, "2": 0, "3": 0 };
+    let count = 0;
+
+    // Iterate through all questions currently in the mock
+    currentMockIds.forEach(id => {
+        const q = allQuestions.find(item => item.id === id);
+        if (q) {
+            const boundaries = GRADE_DATA[q.paper][q.year];
+            if (boundaries) {
+                sums["S"] += boundaries["S"];
+                sums["1"] += boundaries["1"];
+                sums["2"] += boundaries["2"];
+                sums["3"] += boundaries["3"];
+                count++;
+            }
+        }
+    });
+
+    if (count === 0) {
+        alert("Error: Could not retrieve grade data for these questions.");
+        return;
+    }
+
+    // Calculate Averages and Round
+    const avg = {
+        "S": Math.round(sums["S"] / count),
+        "1": Math.round(sums["1"] / count),
+        "2": Math.round(sums["2"] / count),
+        "3": Math.round(sums["3"] / count)
+    };
+
+    // Build Modal HTML
+    const display = document.getElementById('grade-display');
+    display.innerHTML = `
+        <div class="grade-row"><span class="grade-label">Grade S:</span> <span class="grade-value">${avg["S"]}</span></div>
+        <div class="grade-row"><span class="grade-label">Grade 1:</span> <span class="grade-value">${avg["1"]}</span></div>
+        <div class="grade-row"><span class="grade-label">Grade 2:</span> <span class="grade-value">${avg["2"]}</span></div>
+        <div class="grade-row"><span class="grade-label">Grade 3:</span> <span class="grade-value">${avg["3"]}</span></div>
+    `;
+
+    // Show Modal
+    document.getElementById('modal-backdrop').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('modal-backdrop').style.display = 'none';
 }
 
 
@@ -169,12 +260,10 @@ function loadFilters() {
     const mockEnd = document.getElementById('mock-end-year');
 
     for(let y=2008; y<=2024; y++) {
-        // Main filter
         let opt = document.createElement('option');
         opt.value = y; opt.innerText = y;
         yearSelect.appendChild(opt);
 
-        // Mock filters
         let optS = document.createElement('option');
         optS.value = y; optS.innerText = y;
         mockStart.appendChild(optS);
@@ -225,7 +314,6 @@ function loadSpecific() {
     }
 }
 
-// Triggered when clicking a question in the table
 function loadFromTable(id) {
     const found = allQuestions.find(q => q.id === id);
     if(found) displayQuestion(found);
@@ -234,29 +322,23 @@ function loadFromTable(id) {
 function displayQuestion(q) {
     currentQuestionId = q.id;
     
-    // 1. Update Info Text
     const paperLabel = (q.paper === 2) ? "II" : "III";
     const info = `Year: ${q.year} | Paper: ${paperLabel} | Question ${q.number}`;
     document.getElementById('question-info').innerText = info;
 
-    // 2. Update Image
     const imgPath = `questions/${q.filename}`; 
     document.getElementById('question-img').src = imgPath;
     document.getElementById('question-img').alt = `STEP ${q.year} ${paperLabel} Q${q.number}`;
 
-    // 3. Show Controls
     document.getElementById('viewer-controls').style.display = 'block';
 
-    // 4. Sync Viewer Inputs with Data
     const data = userProgress[q.id] || { marks: '', notes: '' };
     document.getElementById('viewer-marks').value = data.marks;
     document.getElementById('viewer-notes').value = data.notes;
 
-    // 5. Reset and Start Timer
     startTimer();
 }
 
-// --- TIMER LOGIC ---
 function startTimer() {
     clearInterval(timerInterval);
     secondsElapsed = 0;
@@ -283,18 +365,13 @@ function renderTable() {
     let questionsToShow = [];
 
     if (currentMode === 'practice') {
-        // Show ALL questions, sorted newest first
         questionsToShow = [...allQuestions].sort((a,b) => b.year - a.year || a.paper - b.paper || a.number - b.number);
     } else {
-        // Show MOCK questions
         if (currentMockIds.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No mock generated yet. Adjust settings above and click "Generate Paper".</td></tr>';
             return;
         }
-        // Filter allQuestions to only find the ones in the ID list
         questionsToShow = allQuestions.filter(q => currentMockIds.includes(q.id));
-        // Sort Mock: Pure (1-8) -> Mech -> Stats implies generic order usually works if sorted by Year/Paper/Num
-        // But user might want standard exam order. Let's just do standard sort.
         questionsToShow.sort((a,b) => a.year - b.year || a.paper - b.paper || a.number - b.number);
     }
 
@@ -307,10 +384,8 @@ function renderTable() {
         const paperRoman = (q.paper === 2) ? "II" : "III";
         const displayName = `${q.year} ${paperRoman} Q${q.number}`;
         
-        // HTML Generation
         const tdCheck = `<td class="col-check"><input type="checkbox" ${data.done ? 'checked' : ''} onchange="updateProgress('${q.id}', 'done', this.checked)"></td>`;
         
-        // Make Name Clickable
         const tdName = `<td class="col-id"><span class="clickable-name" onclick="loadFromTable('${q.id}')">${displayName}</span></td>`;
         
         const tdDate = `<td class="col-date"><input type="date" value="${data.date}" onchange="updateProgress('${q.id}', 'date', this.value)"></td>`;
@@ -334,34 +409,27 @@ function updateProgress(id, field, value) {
     }
     userProgress[id][field] = value;
     
-    // Save to LocalStorage
     localStorage.setItem('stepTrackerData', JSON.stringify(userProgress));
 
-    // If we updated the Table, and the Question is currently open in Viewer, update Viewer inputs
     if (id === currentQuestionId) {
         if (field === 'marks') document.getElementById('viewer-marks').value = value;
         if (field === 'notes') document.getElementById('viewer-notes').value = value;
     }
     
-    // If we update via table checkbox, we might want to re-render to apply background color
     if (field === 'done') renderTable();
 }
 
-// Sync from Viewer Inputs -> Data -> Table
 function syncViewerToData() {
     if (!currentQuestionId) return;
     
     const marks = document.getElementById('viewer-marks').value;
     const notes = document.getElementById('viewer-notes').value;
     
-    // Update Data
     if (!userProgress[currentQuestionId]) userProgress[currentQuestionId] = { done: false, date: '' };
     userProgress[currentQuestionId].marks = marks;
     userProgress[currentQuestionId].notes = notes;
     
     localStorage.setItem('stepTrackerData', JSON.stringify(userProgress));
-    
-    // Re-render table to ensure consistency
     renderTable(); 
 }
 
