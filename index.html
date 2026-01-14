@@ -19,12 +19,19 @@
         
         <div id="controls-practice" class="controls">
             <div class="filter-group">
-                <label><input type="checkbox" id="chk-p2" checked> P2</label>
-                <label><input type="checkbox" id="chk-p3" checked> P3</label>
+                <label><input type="checkbox" id="chk-p2" checked onchange="renderTable()"> P2</label>
+                <label><input type="checkbox" id="chk-p3" checked onchange="renderTable()"> P3</label>
                 <span class="separator">|</span>
-                <label><input type="checkbox" id="chk-pure" checked> Pure</label>
-                <label><input type="checkbox" id="chk-mech" checked> Mechanics</label>
-                <label><input type="checkbox" id="chk-stats" checked> Statistics</label>
+                <label><input type="checkbox" id="chk-pure" checked onchange="renderTable()"> Pure</label>
+                <label><input type="checkbox" id="chk-mech" checked onchange="renderTable()"> Mech</label>
+                <label><input type="checkbox" id="chk-stats" checked onchange="renderTable()"> Stats</label>
+                
+                <span class="separator">|</span>
+                
+                <select id="sel-topic" onchange="renderTable()" style="max-width: 150px;">
+                    <option value="all">All Topics</option>
+                    </select>
+
                 <button class="primary" onclick="generateRandom()">Random Question</button>
             </div>
 
@@ -104,7 +111,7 @@
                         <tr>
                             <th class="col-check">✓</th>
                             <th class="col-id">Question</th>
-                            <th class="col-date">Date</th>
+                            <th class="col-topic">Topic</th> <th class="col-date">Date</th>
                             <th class="col-marks">Marks</th>
                             <th class="col-notes">Notes</th>
                         </tr>
