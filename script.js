@@ -1,19 +1,19 @@
 /* script.js */
 
 // --- FIREBASE IMPORTS & SETUP ---
-// We use the CDN links because GitHub Pages is a static host (no build step)
+// Note: We use CDN links (https://...) because this is a static HTML site without a build tool.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // YOUR FIREBASE CONFIGURATION
 const firebaseConfig = {
-  apiKey: "AIzaSyCpGj9r0kHO2_oYx7bYxgEzUh8-XTT3kRE",
-  authDomain: "stepbot3-e3547.firebaseapp.com",
-  projectId: "stepbot3-e3547",
-  storageBucket: "stepbot3-e3547.firebasestorage.app",
-  messagingSenderId: "726714235429",
-  appId: "1:726714235429:web:e51c16b882350b2f0c9dcc"
+    apiKey: "AIzaSyCpGj9r0kHO2_oYx7bYxgEzUh8-XTT3kRE",
+    authDomain: "stepbot3-e3547.firebaseapp.com",
+    projectId: "stepbot3-e3547",
+    storageBucket: "stepbot3-e3547.firebasestorage.app",
+    messagingSenderId: "726714235429",
+    appId: "1:726714235429:web:e51c16b882350b2f0c9dcc"
 };
 
 // Initialize Firebase
@@ -25,8 +25,29 @@ try {
     auth = getAuth(app);
     db = getFirestore(app);
     provider = new GoogleAuthProvider();
+    console.log("Firebase initialized successfully");
 } catch (e) {
     console.error("Firebase initialization failed:", e);
+}
+
+// --- AUTH BUTTON LOGIC (Updates button position) ---
+function createAuthButton(isLoggedIn) {
+    // Remove existing button if any
+    const existing = document.getElementById('auth-btn');
+    if(existing) existing.remove();
+
+    const btn = document.createElement('button');
+    btn.id = 'auth-btn';
+    // This assumes the parent is flex container. 
+    // margin-left: auto pushes this specific button to the far right.
+    btn.style.marginLeft = 'auto'; 
+    btn.className = isLoggedIn ? 'secondary' : 'primary';
+    btn.innerText = isLoggedIn ? 'Sign Out' : 'Sign In with Google';
+    btn.onclick = isLoggedIn ? logout : login;
+    
+    // Add to header
+    const headerTop = document.querySelector('.header-top');
+    if(headerTop) headerTop.appendChild(btn);
 }
 
 // --- CONFIGURATION & DATA ---

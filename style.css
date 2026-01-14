@@ -22,11 +22,11 @@ header {
 
 .header-top {
     display: flex;
-    justify-content: space-between; /* Keeps Sign In button on far right */
-    align-items: center;
+    align-items: center; /* Vertically center everything */
     padding: 10px 20px;
     border-bottom: 1px solid #34495e;
-    gap: 200px; /* <--- ADD THIS LINE to fix the spacing */
+    gap: 30px; /* Adds space between "StepBot3" and the buttons */
+    /* Removed 'justify-content: space-between' so buttons stay left */
 }
 
 .logo {
