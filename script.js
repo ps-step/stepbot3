@@ -235,7 +235,9 @@ async function saveToCloud() {
 
 function getQuestionType(year, number) {
     if (number <= 8) return 'pure';
-    if (year <= 2017) {
+    
+    // CHANGED: was 2017, now 2018
+    if (year <= 2018) { 
         if (number >= 9 && number <= 11) return 'mechanics';
         if (number >= 12 && number <= 13) return 'stats';
     } else {
@@ -250,7 +252,10 @@ function generateQuestionList() {
     const papers = [2, 3];
     for (let year = 2008; year <= 2024; year++) {
         papers.forEach(paper => {
-            let maxQ = (year <= 2017) ? 13 : 12;
+            
+            // CHANGED: was 2017, now 2018
+            let maxQ = (year <= 2018) ? 13 : 12;
+
             for (let num = 1; num <= maxQ; num++) {
                 const broadType = getQuestionType(year, num);
                 const id = `${year}.${paper}.${num}`; 
