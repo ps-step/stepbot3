@@ -264,7 +264,31 @@ function generateQuestionList() {
     }
 }
 
-// --- GLOBAL EXPORTS (Crucial for HTML onclicks) ---
+// --- TIMER FUNCTIONS (Refined) ---
+
+function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    secondsElapsed = 0;
+    
+    // Immediate update
+    updateTimerDisplay();
+    
+    timerInterval = setInterval(() => {
+        secondsElapsed++;
+        updateTimerDisplay();
+    }, 1000);
+}
+
+function updateTimerDisplay() {
+    const timerEl = document.getElementById('timer');
+    if (!timerEl) return;
+    
+    const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+    const secs = (secondsElapsed % 60).toString().padStart(2, '0');
+    timerEl.innerText = `${mins}:${secs}`;
+}
+
+// --- GLOBAL EXPORTS ---
 
 window.switchMode = function(mode) {
     currentMode = mode;
