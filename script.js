@@ -1,5 +1,34 @@
 /* script.js */
 
+// --- FIREBASE IMPORTS & SETUP ---
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// !!! PASTE YOUR FIREBASE CONFIG HERE !!!
+// You get this from Project Settings > General > Your Apps in the Firebase Console
+const firebaseConfig = {
+    apiKey: "AIzaSy...", 
+    authDomain: "your-project.firebaseapp.com",
+    projectId: "your-project",
+    storageBucket: "your-project.appspot.com",
+    messagingSenderId: "123...",
+    appId: "1:123..."
+};
+
+// Initialize Firebase
+let app, auth, db, provider;
+let currentUser = null;
+
+try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    provider = new GoogleAuthProvider();
+} catch (e) {
+    console.error("Firebase not configured yet. Paste your config object in script.js!");
+}
+
 // --- CONFIGURATION & DATA ---
 
 // Grade Boundaries Data (2008-2024)
@@ -8,8 +37,7 @@ const GRADE_DATA = {
     3: { 2024: {"S":85,"1":64,"2":54,"3":32}, 2023: {"S":82,"1":62,"2":51,"3":29}, 2022: {"S":89,"1":67,"2":54,"3":29}, 2021: {"S":92,"1":67,"2":54,"3":25}, 2020: {"S":88,"1":67,"2":53,"3":30}, 2019: {"S":77,"1":57,"2":48,"3":27}, 2018: {"S":87,"1":59,"2":49,"3":27}, 2017: {"S":95,"1":69,"2":57,"3":28}, 2016: {"S":88,"1":64,"2":55,"3":32}, 2015: {"S":88,"1":65,"2":54,"3":29}, 2014: {"S":81,"1":59,"2":48,"3":27}, 2013: {"S":85,"1":62,"2":48,"3":27}, 2012: {"S":84,"1":65,"2":53,"3":32}, 2011: {"S":91,"1":65,"2":53,"3":32}, 2010: {"S":78,"1":56,"2":46,"3":29}, 2009: {"S":95,"1":67,"2":55,"3":38}, 2008: {"S":82,"1":63,"2":52,"3":34} }
 };
 
-// FULL TOPIC LOOKUP (Mapped from provided data)
-// Key: "Year.Paper.Question"
+// FULL TOPIC LOOKUP 
 const TOPIC_LOOKUP = {
     // PROOF
     "2024.2.1": "Proof", "2024.2.6": "Proof", "2020.2.3": "Proof", "2020.2.5": "Proof", "2017.2.1": "Proof", "2017.2.6": "Proof", "2015.2.3": "Proof", "2015.2.5": "Proof", "2013.2.6": "Proof", "2012.2.8": "Proof", "2008.2.3": "Proof",
@@ -171,7 +199,98 @@ window.onload = function() {
     generateQuestionList();
     loadFilters(); 
     renderTable(); 
+    
+    // Auth Listener
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            loadCloudData(user);
+            createAuthButton(true);
+        } else {
+            currentUser = null;
+            createAuthButton(false);
+        }
+    });
 };
+
+// --- AUTH & CLOUD FUNCTIONS ---
+
+function createAuthButton(isLoggedIn) {
+    // Remove existing button if any
+    const existing = document.getElementById('auth-btn');
+    if(existing) existing.remove();
+
+    const btn = document.createElement('button');
+    btn.id = 'auth-btn';
+    btn.style.marginLeft = 'auto'; // Push to right
+    btn.className = isLoggedIn ? 'secondary' : 'primary';
+    btn.innerText = isLoggedIn ? 'Sign Out' : 'Sign In with Google';
+    btn.onclick = isLoggedIn ? logout : login;
+    
+    // Add to header
+    const headerTop = document.querySelector('.header-top');
+    headerTop.appendChild(btn);
+}
+
+async function login() {
+    try {
+        await signInWithPopup(auth, provider);
+    } catch (error) {
+        console.error("Login failed", error);
+        alert("Login failed: " + error.message);
+    }
+}
+
+async function logout() {
+    try {
+        await signOut(auth);
+        alert("Signed out. Switching to local storage.");
+        // Optional: clear userProgress or reload page
+        location.reload();
+    } catch (error) {
+        console.error("Logout failed", error);
+    }
+}
+
+async function loadCloudData(user) {
+    const docRef = doc(db, "users", user.uid);
+    try {
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const cloudData = docSnap.data().progress;
+            // Overwrite local data with cloud data on login
+            userProgress = cloudData;
+            localStorage.setItem('stepTrackerData', JSON.stringify(userProgress));
+            renderTable();
+            if(currentQuestionId) displayQuestion(allQuestions.find(q => q.id === currentQuestionId));
+            console.log("Data synced from cloud");
+        } else {
+            // First time login? Create empty doc or upload local? 
+            // Let's upload local data to cloud
+            saveToCloud();
+        }
+    } catch (e) {
+        console.error("Error loading cloud data", e);
+    }
+}
+
+async function saveToCloud() {
+    if(!currentUser) return;
+    try {
+        await setDoc(doc(db, "users", currentUser.uid), { 
+            progress: userProgress,
+            lastUpdated: new Date()
+        });
+        console.log("Saved to cloud");
+    } catch (e) {
+        console.error("Error saving to cloud", e);
+    }
+}
+
+// Attach to window so HTML can see them
+window.login = login;
+window.logout = logout;
+
 
 // --- LOGIC ---
 
@@ -218,7 +337,7 @@ function generateQuestionList() {
 
 // --- MODE SWITCHING ---
 
-function switchMode(mode) {
+window.switchMode = function(mode) {
     currentMode = mode;
     
     // 1. Update Tab Buttons
@@ -266,7 +385,7 @@ function switchMode(mode) {
 
 // --- MOCK GENERATION ---
 
-function generateMock() {
+window.generateMock = function() {
     const startYear = parseInt(document.getElementById('mock-start-year').value);
     const endYear = parseInt(document.getElementById('mock-end-year').value);
     const useP2 = document.getElementById('mock-p2').checked;
@@ -331,7 +450,7 @@ function generateMock() {
 
 // --- GRADE BOUNDARIES ---
 
-function viewGradeBoundaries() {
+window.viewGradeBoundaries = function() {
     try {
         if (currentMockIds.length === 0) {
             alert("Please generate a mock paper first.");
@@ -456,7 +575,7 @@ function loadFilters() {
     }
 }
 
-function generateRandom() {
+window.generateRandom = function() {
     // Broad Filters
     const allowP2 = document.getElementById('chk-p2').checked;
     const allowP3 = document.getElementById('chk-p3').checked;
@@ -492,7 +611,7 @@ function generateRandom() {
     displayQuestion(eligible[randomIndex]);
 }
 
-function loadSpecific() {
+window.loadSpecific = function() {
     const y = parseInt(document.getElementById('sel-year').value);
     const p = parseInt(document.getElementById('sel-paper').value);
     const n = parseInt(document.getElementById('sel-number').value);
@@ -624,7 +743,11 @@ window.updateProgress = function(id, field, value) {
     }
     userProgress[id][field] = value;
     
+    // Save locally
     localStorage.setItem('stepTrackerData', JSON.stringify(userProgress));
+    
+    // Attempt save to cloud
+    saveToCloud();
 
     if (id === currentQuestionId) {
         if (field === 'marks') document.getElementById('viewer-marks').value = value;
@@ -645,6 +768,7 @@ window.syncViewerToData = function() {
     userProgress[currentQuestionId].notes = notes;
     
     localStorage.setItem('stepTrackerData', JSON.stringify(userProgress));
+    saveToCloud();
     renderTable(); 
 }
 
