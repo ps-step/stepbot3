@@ -325,7 +325,7 @@ td { position: relative; }
     overflow-y: auto;
 }
 
-/* --- Text Panels (Info & Advice) --- */
+/* --- Text Panels (Info & Resources) --- */
 .text-panel {
     flex: 1;
     overflow-y: auto;
@@ -337,8 +337,9 @@ td { position: relative; }
 
 .text-content {
     background: white;
-    max-width: 800px;
-    width: 100%;
+    /* Updated for wider view */
+    max-width: 1200px; 
+    width: 95%;
     padding: 40px;
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
