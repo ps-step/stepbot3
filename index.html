@@ -1,138 +1,389 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StepBot3</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+/* style.css */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f9;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
 
-    <header>
-        <div class="header-top">
-            <div class="logo">StepBot3</div>
-            <div class="mode-tabs">
-                <button id="tab-practice" class="mode-btn active" onclick="switchMode('practice')">Practice Mode</button>
-                <button id="tab-mock" class="mode-btn" onclick="switchMode('mock')">Mock Exam</button>
-            </div>
-        </div>
-        
-        <div id="controls-practice" class="controls">
-            <div class="filter-group">
-                <label><input type="checkbox" id="chk-p2" checked> P2</label>
-                <label><input type="checkbox" id="chk-p3" checked> P3</label>
-                <span class="separator">|</span>
-                <label><input type="checkbox" id="chk-pure" checked> Pure</label>
-                <label><input type="checkbox" id="chk-mech" checked> Mechanics</label>
-                <label><input type="checkbox" id="chk-stats" checked> Statistics</label>
-                <button class="primary" onclick="generateRandom()">Random Question</button>
-            </div>
+/* Header Structure */
+header {
+    background-color: #2c3e50;
+    color: white;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    z-index: 20;
+}
 
-            <div class="selector-group">
-                <select id="sel-year"></select>
-                <select id="sel-paper">
-                    <option value="2">Paper 2</option>
-                    <option value="3">Paper 3</option>
-                </select>
-                <select id="sel-number">
-                    <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-                    <option value="4">4</option><option value="5">5</option><option value="6">6</option>
-                    <option value="7">7</option><option value="8">8</option><option value="9">9</option>
-                    <option value="10">10</option><option value="11">11</option><option value="12">12</option>
-                    <option value="13">13</option>
-                </select>
-                <button class="secondary" onclick="loadSpecific()">Go</button>
-            </div>
-        </div>
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    border-bottom: 1px solid #34495e;
+}
 
-        <div id="controls-mock" class="controls" style="display:none;">
-            <div class="filter-group">
-                <span style="font-weight:bold; color:#ecf0f1; margin-right:10px;">New Mock:</span>
-                
-                <label>From:</label>
-                <select id="mock-start-year" style="width: 80px;"></select>
-                
-                <label>To:</label>
-                <select id="mock-end-year" style="width: 80px;"></select>
-                
-                <span class="separator">|</span>
-                
-                <label><input type="checkbox" id="mock-p2" checked> P2</label>
-                <label><input type="checkbox" id="mock-p3" checked> P3</label>
-                
-                <button class="primary" style="background-color: #e67e22;" onclick="generateMock()">Generate Paper</button>
-                <button class="secondary" onclick="viewGradeBoundaries()">View Grade Boundaries</button>
-            </div>
-        </div>
-    </header>
+.logo {
+    font-weight: bold;
+    font-size: 1.4em;
+    letter-spacing: 1px;
+}
 
-    <main>
-        <div id="viewer-panel">
-            <div id="question-header">
-                <span id="question-info">Select a question from the list</span>
-            </div>
-            
-            <div class="img-container">
-                <img id="question-img" src="" alt="Question Image" onerror="this.style.display='none'" onload="this.style.display='block'">
-            </div>
-            
-            <div class="viewer-controls" id="viewer-controls" style="display:none;">
-                <div class="viewer-inputs">
-                    <div class="input-group">
-                        <label>Marks:</label>
-                        <input type="number" id="viewer-marks" placeholder="/20" onchange="syncViewerToData()">
-                    </div>
-                    <div class="input-group" style="flex-grow: 1;">
-                        <label>Notes:</label>
-                        <input type="text" id="viewer-notes" placeholder="Enter notes here..." onchange="syncViewerToData()">
-                    </div>
-                </div>
+/* Mode Tabs */
+.mode-tabs {
+    display: flex;
+    background: #34495e;
+    border-radius: 5px;
+    overflow: hidden;
+    padding: 2px;
+}
 
-                <div class="action-bar">
-                    <div class="timer-display" id="timer">00:00</div>
-                    <button id="btn-mark-done" class="primary" onclick="markCurrentAsDone()">Mark Complete</button>
-                    <button class="secondary" onclick="showMarkScheme()">Mark Scheme</button>
-                </div>
-            </div>
-        </div>
+.mode-btn {
+    background: transparent;
+    border: none;
+    color: #bdc3c7;
+    padding: 8px 15px;
+    font-weight: bold;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.2s;
+}
 
-        <div id="tracker-panel">
-            <h3 id="tracker-title">All Questions</h3>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th class="col-check">✓</th>
-                            <th class="col-id">Question</th>
-                            <th class="col-date">Date</th>
-                            <th class="col-marks">Marks</th>
-                            <th class="col-notes">Notes</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tracker-body">
-                        </tbody>
-                </table>
-            </div>
-        </div>
-    </main>
+.mode-btn:hover {
+    color: white;
+}
 
-    <div id="modal-backdrop" class="modal-backdrop" onclick="closeModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <h3>Estimated Grade Boundaries</h3>
-                <span class="close-btn" onclick="closeModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <p>Based on the composition of your current mock paper:</p>
-                <div id="grade-display">
-                    </div>
-            </div>
-            <div class="modal-footer">
-                <button class="secondary" onclick="closeModal()">Close</button>
-            </div>
-        </div>
-    </div>
+.mode-btn.active {
+    background: #ecf0f1;
+    color: #2c3e50;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
 
-    <script src="script.js"></script>
-</body>
-</html>
+/* Controls Areas */
+.controls {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 10px 20px;
+    background-color: #2c3e50;
+    color: white;
+    font-size: 0.9em;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.filter-group, .selector-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.separator {
+    color: #7f8c8d;
+    margin: 0 5px;
+}
+
+select, button, input[type="text"], input[type="number"] {
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 0.9em;
+    box-sizing: border-box; 
+    height: 30px; 
+    vertical-align: middle;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s;
+    height: 30px; 
+    line-height: 1;
+}
+
+button.primary {
+    background-color: #27ae60;
+    color: white;
+    font-weight: bold;
+}
+button.primary:hover { background-color: #219150; }
+
+button.secondary {
+    background-color: #34495e;
+    color: white;
+}
+button.secondary:hover { background-color: #2c3e50; }
+
+/* Main Layout */
+main {
+    display: flex;
+    flex: 1;
+    overflow: hidden; 
+}
+
+/* --- Left Panel: Viewer --- */
+#viewer-panel {
+    flex: 2; 
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    background-color: #ecf0f1;
+    border-right: 1px solid #bdc3c7;
+    min-width: 300px;
+}
+
+#question-header {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+#question-info {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.img-container {
+    flex: 1;
+    overflow-y: auto; 
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background: white;
+    border: 1px solid #ccc;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+    padding: 10px;
+    margin-bottom: 15px;
+}
+
+#question-img {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+/* Viewer Controls */
+.viewer-controls {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+
+.viewer-inputs {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.input-group label {
+    font-size: 0.8em;
+    color: #7f8c8d;
+    font-weight: bold;
+}
+
+.action-bar {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.timer-display {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #e74c3c;
+    background: #fadbd8;
+    padding: 5px 10px;
+    border-radius: 4px;
+    min-width: 80px;
+    text-align: center;
+}
+
+/* --- Right Panel: Tracker Table --- */
+#tracker-panel {
+    flex: 1; 
+    padding: 0;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    min-width: 450px;
+}
+
+#tracker-panel h3 {
+    padding: 15px 20px;
+    margin: 0;
+    background-color: #fff;
+    border-bottom: 1px solid #eee;
+}
+
+.table-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    position: relative;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85em;
+}
+
+th, td {
+    border-bottom: 1px solid #eee;
+    padding: 8px;
+    text-align: left;
+    vertical-align: middle; 
+}
+
+th {
+    background-color: #34495e;
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 20; 
+    box-shadow: 0 2px 2px rgba(0,0,0,0.1);
+}
+
+.clickable-name {
+    color: #2980b9;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+}
+.clickable-name:hover {
+    text-decoration: underline;
+    color: #1a5276;
+}
+
+/* Column Widths */
+.col-check { width: 30px; text-align: center; }
+.col-id { width: 110px; }
+.col-date { width: 120px; } 
+.col-marks { width: 60px; }
+.col-notes { width: auto; }
+
+/* Table Inputs */
+td input[type="date"],
+td input[type="number"] { 
+    width: 100%; 
+    padding: 2px 5px; 
+    height: 30px; 
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    vertical-align: middle;
+}
+
+td { position: relative; } 
+
+.note-cell {
+    position: relative;
+    height: 30px;
+}
+
+.note-input {
+    width: 100%;
+    height: 30px; 
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 4px;
+    font-family: inherit;
+    font-size: inherit;
+    resize: none;
+    overflow: hidden;
+    background: white;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    vertical-align: middle;
+    line-height: 20px;
+}
+
+.note-input:focus, .note-input:hover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 30;
+    height: 100px;
+    width: 250px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    border-color: #3498db;
+    overflow-y: auto;
+}
+
+/* --- Modal Styles --- */
+.modal-backdrop {
+    display: none; /* This ensures it is HIDDEN by default */
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: white;
+    width: 90%;
+    max-width: 400px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    overflow: hidden;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+    background-color: #2c3e50;
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 { margin: 0; }
+
+.close-btn {
+    font-size: 1.5em;
+    cursor: pointer;
+    line-height: 0.8;
+}
+
+.modal-body {
+    padding: 20px;
+    text-align: center;
+}
+
+.modal-footer {
+    padding: 10px 20px 20px;
+    text-align: center;
+}
+
+.grade-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 1.1em;
+}
+.grade-label { font-weight: bold; color: #7f8c8d; }
+.grade-value { font-weight: bold; color: #2c3e50; }

@@ -2,7 +2,7 @@
 
 // --- CONFIGURATION & DATA ---
 
-// Grade Boundaries Data (Source: Provided 2008-2024)
+// Grade Boundaries Data (2008-2024)
 const GRADE_DATA = {
     // Paper 2
     2: {
@@ -61,7 +61,7 @@ let secondsElapsed = 0;
 // Initialize
 window.onload = function() {
     generateQuestionList();
-    loadFilters(); // Populate dropdowns
+    loadFilters(); 
     renderTable(); 
 };
 
@@ -127,7 +127,6 @@ function switchMode(mode) {
 // --- MOCK GENERATION ---
 
 function generateMock() {
-    // 1. Get Parameters
     const startYear = parseInt(document.getElementById('mock-start-year').value);
     const endYear = parseInt(document.getElementById('mock-end-year').value);
     const useP2 = document.getElementById('mock-p2').checked;
@@ -143,31 +142,26 @@ function generateMock() {
         return;
     }
 
-    // 2. Filter Pool
     let pool = allQuestions.filter(q => {
         if (q.year < startYear || q.year > endYear) return false;
         if (q.paper === 2 && !useP2) return false;
         if (q.paper === 3 && !useP3) return false;
         
-        // Check if done
         const progress = userProgress[q.id];
         if (progress && progress.done) return false;
         
         return true;
     });
 
-    // 3. Split into Topics
     const pure = pool.filter(q => q.type === 'pure');
     const mech = pool.filter(q => q.type === 'mechanics');
     const stats = pool.filter(q => q.type === 'stats');
 
-    // 4. Validate Counts
     if (pure.length < 8 || mech.length < 2 || stats.length < 2) {
         alert(`Not enough uncompleted questions available!\n\nAvailable:\nPure: ${pure.length} (Need 8)\nMech: ${mech.length} (Need 2)\nStats: ${stats.length} (Need 2)`);
         return;
     }
 
-    // 5. Shuffle and Select
     function getRandomSubarray(arr, size) {
         let shuffled = arr.slice(0);
         let i = arr.length;
@@ -195,59 +189,64 @@ function generateMock() {
     alert("Mock generated! Good luck.");
 }
 
-// --- GRADE BOUNDARIES ---
+// --- GRADE BOUNDARIES (Fixed) ---
 
 function viewGradeBoundaries() {
-    if (currentMockIds.length === 0) {
-        alert("Please generate a mock paper first.");
-        return;
-    }
+    try {
+        if (currentMockIds.length === 0) {
+            alert("Please generate a mock paper first.");
+            return;
+        }
 
-    let sums = { "S": 0, "1": 0, "2": 0, "3": 0 };
-    let count = 0;
+        let sums = { "S": 0, "1": 0, "2": 0, "3": 0 };
+        let count = 0;
 
-    // Iterate through all questions currently in the mock
-    currentMockIds.forEach(id => {
-        const q = allQuestions.find(item => item.id === id);
-        if (q) {
-            const boundaries = GRADE_DATA[q.paper][q.year];
-            if (boundaries) {
+        currentMockIds.forEach(id => {
+            const q = allQuestions.find(item => item.id === id);
+            
+            // Safety Check: Ensure question exists and data exists for that year
+            if (q && GRADE_DATA[q.paper] && GRADE_DATA[q.paper][q.year]) {
+                const boundaries = GRADE_DATA[q.paper][q.year];
                 sums["S"] += boundaries["S"];
                 sums["1"] += boundaries["1"];
                 sums["2"] += boundaries["2"];
                 sums["3"] += boundaries["3"];
                 count++;
+            } else {
+                console.warn(`Missing grade data for question ID: ${id}`);
             }
+        });
+
+        if (count === 0) {
+            alert("Error: Could not retrieve grade data for these questions.");
+            return;
         }
-    });
 
-    if (count === 0) {
-        alert("Error: Could not retrieve grade data for these questions.");
-        return;
+        const avg = {
+            "S": Math.round(sums["S"] / count),
+            "1": Math.round(sums["1"] / count),
+            "2": Math.round(sums["2"] / count),
+            "3": Math.round(sums["3"] / count)
+        };
+
+        const display = document.getElementById('grade-display');
+        display.innerHTML = `
+            <div class="grade-row"><span class="grade-label">Grade S:</span> <span class="grade-value">${avg["S"]}</span></div>
+            <div class="grade-row"><span class="grade-label">Grade 1:</span> <span class="grade-value">${avg["1"]}</span></div>
+            <div class="grade-row"><span class="grade-label">Grade 2:</span> <span class="grade-value">${avg["2"]}</span></div>
+            <div class="grade-row"><span class="grade-label">Grade 3:</span> <span class="grade-value">${avg["3"]}</span></div>
+        `;
+
+        document.getElementById('modal-backdrop').style.display = 'flex';
+        
+    } catch (error) {
+        console.error("Crash in viewGradeBoundaries:", error);
+        alert("Something went wrong calculating grades. Check console for details.");
     }
-
-    // Calculate Averages and Round
-    const avg = {
-        "S": Math.round(sums["S"] / count),
-        "1": Math.round(sums["1"] / count),
-        "2": Math.round(sums["2"] / count),
-        "3": Math.round(sums["3"] / count)
-    };
-
-    // Build Modal HTML
-    const display = document.getElementById('grade-display');
-    display.innerHTML = `
-        <div class="grade-row"><span class="grade-label">Grade S:</span> <span class="grade-value">${avg["S"]}</span></div>
-        <div class="grade-row"><span class="grade-label">Grade 1:</span> <span class="grade-value">${avg["1"]}</span></div>
-        <div class="grade-row"><span class="grade-label">Grade 2:</span> <span class="grade-value">${avg["2"]}</span></div>
-        <div class="grade-row"><span class="grade-label">Grade 3:</span> <span class="grade-value">${avg["3"]}</span></div>
-    `;
-
-    // Show Modal
-    document.getElementById('modal-backdrop').style.display = 'flex';
 }
 
-function closeModal() {
+// Explicitly attached to window to ensure HTML can find it
+window.closeModal = function() {
     document.getElementById('modal-backdrop').style.display = 'none';
 }
 
@@ -314,7 +313,8 @@ function loadSpecific() {
     }
 }
 
-function loadFromTable(id) {
+// Expose to window for HTML access
+window.loadFromTable = function(id) {
     const found = allQuestions.find(q => q.id === id);
     if(found) displayQuestion(found);
 }
@@ -403,7 +403,8 @@ function renderTable() {
     });
 }
 
-function updateProgress(id, field, value) {
+// Expose to window
+window.updateProgress = function(id, field, value) {
     if (!userProgress[id]) {
         userProgress[id] = { done: false, date: '', marks: '', notes: '' };
     }
@@ -419,7 +420,7 @@ function updateProgress(id, field, value) {
     if (field === 'done') renderTable();
 }
 
-function syncViewerToData() {
+window.syncViewerToData = function() {
     if (!currentQuestionId) return;
     
     const marks = document.getElementById('viewer-marks').value;
@@ -433,7 +434,7 @@ function syncViewerToData() {
     renderTable(); 
 }
 
-function markCurrentAsDone() {
+window.markCurrentAsDone = function() {
     if(!currentQuestionId) return;
     
     updateProgress(currentQuestionId, 'done', true);
@@ -447,6 +448,6 @@ function markCurrentAsDone() {
     alert(`Marked ${currentQuestionId} as complete!`);
 }
 
-function showMarkScheme() {
+window.showMarkScheme = function() {
     alert("Mark schemes coming soon in a future update!");
 }
