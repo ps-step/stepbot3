@@ -189,7 +189,7 @@ function generateMock() {
     alert("Mock generated! Good luck.");
 }
 
-// --- GRADE BOUNDARIES (Fixed) ---
+// --- GRADE BOUNDARIES ---
 
 function viewGradeBoundaries() {
     try {
@@ -204,7 +204,6 @@ function viewGradeBoundaries() {
         currentMockIds.forEach(id => {
             const q = allQuestions.find(item => item.id === id);
             
-            // Safety Check: Ensure question exists and data exists for that year
             if (q && GRADE_DATA[q.paper] && GRADE_DATA[q.paper][q.year]) {
                 const boundaries = GRADE_DATA[q.paper][q.year];
                 sums["S"] += boundaries["S"];
@@ -212,8 +211,6 @@ function viewGradeBoundaries() {
                 sums["2"] += boundaries["2"];
                 sums["3"] += boundaries["3"];
                 count++;
-            } else {
-                console.warn(`Missing grade data for question ID: ${id}`);
             }
         });
 
@@ -241,13 +238,46 @@ function viewGradeBoundaries() {
         
     } catch (error) {
         console.error("Crash in viewGradeBoundaries:", error);
-        alert("Something went wrong calculating grades. Check console for details.");
     }
 }
 
-// Explicitly attached to window to ensure HTML can find it
 window.closeModal = function() {
     document.getElementById('modal-backdrop').style.display = 'none';
+}
+
+
+// --- PDF MARK SCHEMES ---
+
+window.showMarkScheme = function() {
+    if (!currentQuestionId) {
+        alert("Please select a question first.");
+        return;
+    }
+
+    const q = allQuestions.find(item => item.id === currentQuestionId);
+    if (!q) return;
+
+    // Construct path: mark_schemes/YEAR.PAPER.pdf
+    const pdfPath = `mark_schemes/${q.year}.${q.paper}.pdf`;
+    
+    // Set Header Info
+    const paperRoman = (q.paper === 2) ? "II" : "III";
+    document.getElementById('pdf-title').innerText = `Mark Scheme - ${q.year} Paper ${paperRoman}`;
+
+    // Update Iframe Source
+    document.getElementById('pdf-frame').src = pdfPath;
+    
+    // Update "New Tab" link (Important for Mobile)
+    document.getElementById('pdf-new-tab').href = pdfPath;
+
+    // Show Modal
+    document.getElementById('pdf-backdrop').style.display = 'flex';
+}
+
+window.closePdfModal = function() {
+    document.getElementById('pdf-backdrop').style.display = 'none';
+    // Clear src to stop playing/downloading in background
+    document.getElementById('pdf-frame').src = "";
 }
 
 
@@ -313,7 +343,6 @@ function loadSpecific() {
     }
 }
 
-// Expose to window for HTML access
 window.loadFromTable = function(id) {
     const found = allQuestions.find(q => q.id === id);
     if(found) displayQuestion(found);
@@ -403,7 +432,6 @@ function renderTable() {
     });
 }
 
-// Expose to window
 window.updateProgress = function(id, field, value) {
     if (!userProgress[id]) {
         userProgress[id] = { done: false, date: '', marks: '', notes: '' };
@@ -446,8 +474,4 @@ window.markCurrentAsDone = function() {
     syncViewerToData();
     renderTable();
     alert(`Marked ${currentQuestionId} as complete!`);
-}
-
-window.showMarkScheme = function() {
-    alert("Mark schemes coming soon in a future update!");
 }

@@ -133,6 +133,21 @@
         </div>
     </div>
 
+    <div id="pdf-backdrop" class="modal-backdrop" onclick="closePdfModal()">
+        <div class="modal-content pdf-modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="pdf-title">Mark Scheme</h3>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <a id="pdf-new-tab" href="#" target="_blank" style="color:white; font-size:0.9em;">Open in new tab</a>
+                    <span class="close-btn" onclick="closePdfModal()">&times;</span>
+                </div>
+            </div>
+            <div class="modal-body pdf-body">
+                <iframe id="pdf-frame" src="" title="Mark Scheme"></iframe>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

@@ -326,7 +326,7 @@ td { position: relative; }
 
 /* --- Modal Styles --- */
 .modal-backdrop {
-    display: none; /* This ensures it is HIDDEN by default */
+    display: none; /* Hidden by default */
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
@@ -339,11 +339,20 @@ td { position: relative; }
 .modal-content {
     background-color: white;
     width: 90%;
-    max-width: 400px;
+    max-width: 400px; /* Small default for Grades */
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     overflow: hidden;
     animation: fadeIn 0.2s ease-out;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Specific class for PDF Modal to be LARGER */
+.pdf-modal-content {
+    max-width: 95vw; /* Almost full width */
+    width: 95vw;
+    height: 90vh; /* Almost full height */
 }
 
 @keyframes fadeIn {
@@ -358,6 +367,7 @@ td { position: relative; }
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0; /* Prevents header from collapsing */
 }
 
 .modal-header h3 { margin: 0; }
@@ -371,6 +381,21 @@ td { position: relative; }
 .modal-body {
     padding: 20px;
     text-align: center;
+}
+
+/* PDF Body needs to take up remaining height */
+.pdf-body {
+    padding: 0;
+    flex: 1; /* Fills remaining space */
+    background: #525659; /* PDF viewer grey */
+    overflow: hidden;
+}
+
+#pdf-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
 }
 
 .modal-footer {
