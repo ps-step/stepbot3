@@ -26,7 +26,7 @@ header {
     align-items: center;
     padding: 10px 20px;
     border-bottom: 1px solid #34495e;
-    gap: 30px; /* <--- ADD THIS LINE to fix the spacing */
+    gap: 200px; /* <--- ADD THIS LINE to fix the spacing */
 }
 
 .logo {
