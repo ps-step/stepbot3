@@ -22,10 +22,11 @@ header {
 
 .header-top {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between; /* Keeps Sign In button on far right */
     align-items: center;
     padding: 10px 20px;
     border-bottom: 1px solid #34495e;
+    gap: 30px; /* <--- ADD THIS LINE to fix the spacing */
 }
 
 .logo {

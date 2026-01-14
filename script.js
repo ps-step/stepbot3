@@ -1,19 +1,19 @@
 /* script.js */
 
 // --- FIREBASE IMPORTS & SETUP ---
+// We use the CDN links because GitHub Pages is a static host (no build step)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// !!! PASTE YOUR FIREBASE CONFIG HERE !!!
-// You get this from Project Settings > General > Your Apps in the Firebase Console
+// YOUR FIREBASE CONFIGURATION
 const firebaseConfig = {
-    apiKey: "AIzaSy...", 
-    authDomain: "your-project.firebaseapp.com",
-    projectId: "your-project",
-    storageBucket: "your-project.appspot.com",
-    messagingSenderId: "123...",
-    appId: "1:123..."
+  apiKey: "AIzaSyCpGj9r0kHO2_oYx7bYxgEzUh8-XTT3kRE",
+  authDomain: "stepbot3-e3547.firebaseapp.com",
+  projectId: "stepbot3-e3547",
+  storageBucket: "stepbot3-e3547.firebasestorage.app",
+  messagingSenderId: "726714235429",
+  appId: "1:726714235429:web:e51c16b882350b2f0c9dcc"
 };
 
 // Initialize Firebase
@@ -26,7 +26,7 @@ try {
     db = getFirestore(app);
     provider = new GoogleAuthProvider();
 } catch (e) {
-    console.error("Firebase not configured yet. Paste your config object in script.js!");
+    console.error("Firebase initialization failed:", e);
 }
 
 // --- CONFIGURATION & DATA ---
