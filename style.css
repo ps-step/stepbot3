@@ -22,11 +22,10 @@ header {
 
 .header-top {
     display: flex;
-    align-items: center; /* Vertically center everything */
+    align-items: center;       /* Vertically centers items */
     padding: 10px 20px;
     border-bottom: 1px solid #34495e;
-    gap: 30px; /* Adds space between "StepBot3" and the buttons */
-    /* Removed 'justify-content: space-between' so buttons stay left */
+    gap: 30px;                 /* Adds the space between Logo and Buttons */
 }
 
 .logo {
