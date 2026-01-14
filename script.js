@@ -221,19 +221,19 @@ function generateQuestionList() {
 function switchMode(mode) {
     currentMode = mode;
     
-    // 1. Update Tab Buttons (Remove active class from all, add to current)
+    // 1. Update Tab Buttons
     document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(`tab-${mode}`).classList.add('active');
 
-    // 2. Hide ALL specific Controls first
+    // 2. Hide ALL Control Strips
     document.getElementById('controls-practice').style.display = 'none';
     document.getElementById('controls-mock').style.display = 'none';
 
-    // 3. Hide ALL Panels first
+    // 3. Hide ALL Panels
     document.getElementById('viewer-panel').style.display = 'none';
     document.getElementById('tracker-panel').style.display = 'none';
     document.getElementById('info-panel').style.display = 'none';
-    document.getElementById('advice-panel').style.display = 'none';
+    document.getElementById('resources-panel').style.display = 'none';
 
     // 4. Show based on Mode
     if (mode === 'practice') {
@@ -258,9 +258,9 @@ function switchMode(mode) {
         // Show Info Text Only
         document.getElementById('info-panel').style.display = 'flex';
     } 
-    else if (mode === 'advice') {
-        // Show Advice Text Only
-        document.getElementById('advice-panel').style.display = 'flex';
+    else if (mode === 'resources') {
+        // Show Resources Text Only
+        document.getElementById('resources-panel').style.display = 'flex';
     }
 }
 
