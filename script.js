@@ -235,9 +235,7 @@ async function saveToCloud() {
 
 function getQuestionType(year, number) {
     if (number <= 8) return 'pure';
-    
-    // CHANGED: was 2017, now 2018
-    if (year <= 2018) { 
+    if (year <= 2018) { // Updated to 2018 based on specification change
         if (number >= 9 && number <= 11) return 'mechanics';
         if (number >= 12 && number <= 13) return 'stats';
     } else {
@@ -252,10 +250,7 @@ function generateQuestionList() {
     const papers = [2, 3];
     for (let year = 2008; year <= 2024; year++) {
         papers.forEach(paper => {
-            
-            // CHANGED: was 2017, now 2018
-            let maxQ = (year <= 2018) ? 13 : 12;
-
+            let maxQ = (year <= 2018) ? 13 : 12; // Updated to 2018
             for (let num = 1; num <= maxQ; num++) {
                 const broadType = getQuestionType(year, num);
                 const id = `${year}.${paper}.${num}`; 
@@ -271,9 +266,13 @@ function generateQuestionList() {
 
 // --- TIMER FUNCTIONS (Refined) ---
 
-function startTimer() {
+function startTimer(keepTime = false) {
     if (timerInterval) clearInterval(timerInterval);
-    secondsElapsed = 0;
+    
+    // Only reset seconds if we are NOT keeping the time
+    if (!keepTime) {
+        secondsElapsed = 0;
+    }
     
     // Immediate update
     updateTimerDisplay();
@@ -293,7 +292,7 @@ function updateTimerDisplay() {
     timerEl.innerText = `${mins}:${secs}`;
 }
 
-// --- GLOBAL EXPORTS ---
+// --- GLOBAL EXPORTS (Crucial for HTML onclicks) ---
 
 window.switchMode = function(mode) {
     currentMode = mode;
@@ -358,12 +357,29 @@ window.generateMock = function() {
 
     function shuffle(arr) { return arr.sort(() => 0.5 - Math.random()); }
     const selected = [...shuffle(pure).slice(0,8), ...shuffle(mech).slice(0,2), ...shuffle(stats).slice(0,2)];
-    selected.sort((a,b) => a.year - b.year || a.paper - b.paper || a.number - b.number);
+    
+    // --- UPDATED SORTING: Pure (1) -> Mech (2) -> Stats (3) ---
+    const typeRank = { 'pure': 1, 'mechanics': 2, 'stats': 3 };
+    
+    selected.sort((a, b) => {
+        const rankA = typeRank[a.type] || 4;
+        const rankB = typeRank[b.type] || 4;
+        
+        // Primary sort: Type
+        if (rankA !== rankB) return rankA - rankB;
+        
+        // Secondary sort: Year -> Paper -> Number
+        return a.year - b.year || a.paper - b.paper || a.number - b.number;
+    });
 
     currentMockIds = selected.map(q => q.id);
     localStorage.setItem('stepBotMockIds', JSON.stringify(currentMockIds));
     renderTable();
-    alert("Mock generated!");
+    
+    // Start/Reset the Exam Timer immediately
+    startTimer(false); 
+    
+    alert("Mock generated! Timer started.");
 }
 
 window.viewGradeBoundaries = function() {
@@ -456,7 +472,12 @@ function displayQuestion(q) {
     document.getElementById('viewer-marks').value = data.marks;
     document.getElementById('viewer-notes').value = data.notes;
     
-    startTimer();
+    // In Mock mode, keep the timer running (don't reset). In Practice, reset per question.
+    if (currentMode === 'mock') {
+        startTimer(true); 
+    } else {
+        startTimer(false);
+    }
 }
 
 window.renderTable = function() {
@@ -482,15 +503,24 @@ window.renderTable = function() {
             if (f.topic !== 'all' && q.topic !== f.topic) return false;
             return true;
         });
+        // Practice Mode: Sort by Year descending (standard view)
+        list.sort((a,b) => b.year - a.year || a.paper - b.paper || a.number - b.number);
     } else {
         if (currentMockIds.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">No mock generated.</td></tr>';
             return;
         }
         list = allQuestions.filter(q => currentMockIds.includes(q.id));
+        
+        // Mock Mode: Sort by Type Priority (Pure -> Mech -> Stats)
+        const typeRank = { 'pure': 1, 'mechanics': 2, 'stats': 3 };
+        list.sort((a, b) => {
+            const rankA = typeRank[a.type] || 4;
+            const rankB = typeRank[b.type] || 4;
+            if (rankA !== rankB) return rankA - rankB;
+            return a.year - b.year || a.paper - b.paper || a.number - b.number;
+        });
     }
-    
-    list.sort((a,b) => b.year - a.year || a.paper - b.paper || a.number - b.number);
 
     list.forEach(q => {
         const data = userProgress[q.id] || { done: false, date: '', marks: '', notes: '' };
