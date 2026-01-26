@@ -106,17 +106,20 @@
         </div>
 
         <div id="tracker-panel">
-            <h3 id="tracker-title">All Questions</h3>
+            <div class="tracker-header-row">
+                <h3 id="tracker-title">All Questions</h3>
+                <span id="average-display" class="avg-badge" style="display:none;">Avg: -</span>
+            </div>
             <div class="table-wrapper">
                 <table>
                     <thead>
                         <tr>
-                            <th class="col-check">✓</th>
-                            <th class="col-id">Question</th>
-                            <th class="col-topic">Topic</th>
-                            <th class="col-date">Date</th>
-                            <th class="col-marks">Marks</th>
-                            <th class="col-notes">Notes</th>
+                            <th class="col-check sortable" onclick="toggleSort('done')">✓</th>
+                            <th class="col-id sortable" onclick="toggleSort('id')">Question</th>
+                            <th class="col-topic sortable" onclick="toggleSort('topic')">Topic</th>
+                            <th class="col-date sortable" onclick="toggleSort('date')">Date</th>
+                            <th class="col-marks sortable" onclick="toggleSort('marks')">Marks</th>
+                            <th class="col-notes sortable" onclick="toggleSort('notes')">Notes</th>
                         </tr>
                     </thead>
                     <tbody id="tracker-body">

@@ -142,6 +142,7 @@ let currentMockIds = JSON.parse(localStorage.getItem('stepBotMockIds')) || [];
 let currentQuestionId = null;
 let timerInterval = null;
 let secondsElapsed = 0;
+let sortState = { field: null, direction: 'asc' }; // Track current sort
 
 // Initialize
 window.onload = function() {
@@ -480,8 +481,23 @@ function displayQuestion(q) {
     }
 }
 
+// --- NEW SORTING & TABLE LOGIC ---
+
+window.toggleSort = function(column) {
+    // If clicking same column, toggle direction
+    if (sortState.field === column) {
+        sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+        // New column, set to ascending
+        sortState.field = column;
+        sortState.direction = 'asc';
+    }
+    renderTable();
+}
+
 window.renderTable = function() {
     const tbody = document.getElementById('tracker-body');
+    const avgDisplay = document.getElementById('average-display');
     tbody.innerHTML = '';
     
     let list = [];
@@ -503,23 +519,89 @@ window.renderTable = function() {
             if (f.topic !== 'all' && q.topic !== f.topic) return false;
             return true;
         });
-        // Practice Mode: Sort by Year descending (standard view)
-        list.sort((a,b) => b.year - a.year || a.paper - b.paper || a.number - b.number);
     } else {
         if (currentMockIds.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">No mock generated.</td></tr>';
             return;
         }
         list = allQuestions.filter(q => currentMockIds.includes(q.id));
-        
-        // Mock Mode: Sort by Type Priority (Pure -> Mech -> Stats)
-        const typeRank = { 'pure': 1, 'mechanics': 2, 'stats': 3 };
+    }
+
+    // --- Calculate Average Mark for VISIBLE list ---
+    let totalMarks = 0;
+    let countedQuestions = 0;
+
+    list.forEach(q => {
+        const prog = userProgress[q.id];
+        if (prog && prog.done && prog.marks !== "" && !isNaN(prog.marks)) {
+            totalMarks += parseInt(prog.marks);
+            countedQuestions++;
+        }
+    });
+
+    if (countedQuestions > 0) {
+        const avg = (totalMarks / countedQuestions).toFixed(1);
+        avgDisplay.innerText = `Avg: ${avg} / 20`;
+        avgDisplay.style.display = 'inline-block';
+    } else {
+        avgDisplay.style.display = 'none';
+    }
+
+    // --- Apply Sorting ---
+    if (sortState.field) {
+        // Custom Sort
         list.sort((a, b) => {
-            const rankA = typeRank[a.type] || 4;
-            const rankB = typeRank[b.type] || 4;
-            if (rankA !== rankB) return rankA - rankB;
-            return a.year - b.year || a.paper - b.paper || a.number - b.number;
+            let valA, valB;
+            const progA = userProgress[a.id] || {};
+            const progB = userProgress[b.id] || {};
+
+            switch (sortState.field) {
+                case 'done':
+                    valA = progA.done ? 1 : 0;
+                    valB = progB.done ? 1 : 0;
+                    break;
+                case 'id':
+                    // Sort by Year -> Paper -> Number naturally
+                    return sortState.direction === 'asc' 
+                        ? (a.year - b.year || a.paper - b.paper || a.number - b.number)
+                        : (b.year - a.year || b.paper - a.paper || b.number - a.number);
+                case 'topic':
+                    valA = a.topic.toLowerCase();
+                    valB = b.topic.toLowerCase();
+                    break;
+                case 'date':
+                    valA = progA.date || '';
+                    valB = progB.date || '';
+                    break;
+                case 'marks':
+                    valA = parseInt(progA.marks) || 0;
+                    valB = parseInt(progB.marks) || 0;
+                    break;
+                case 'notes':
+                    valA = (progA.notes || '').toLowerCase();
+                    valB = (progB.notes || '').toLowerCase();
+                    break;
+            }
+
+            if (valA < valB) return sortState.direction === 'asc' ? -1 : 1;
+            if (valA > valB) return sortState.direction === 'asc' ? 1 : -1;
+            return 0;
         });
+    } else {
+        // Default Sorting Logic
+        if (currentMode === 'mock') {
+            // Mock Default: Type Priority
+            const typeRank = { 'pure': 1, 'mechanics': 2, 'stats': 3 };
+            list.sort((a, b) => {
+                const rankA = typeRank[a.type] || 4;
+                const rankB = typeRank[b.type] || 4;
+                if (rankA !== rankB) return rankA - rankB;
+                return a.year - b.year || a.paper - b.paper || a.number - b.number;
+            });
+        } else {
+            // Practice Default: Year Descending
+            list.sort((a,b) => b.year - a.year || a.paper - b.paper || a.number - b.number);
+        }
     }
 
     list.forEach(q => {
@@ -550,7 +632,8 @@ window.updateProgress = function(id, field, value) {
         if (field === 'marks') document.getElementById('viewer-marks').value = value;
         if (field === 'notes') document.getElementById('viewer-notes').value = value;
     }
-    if (field === 'done') renderTable();
+    // Re-render table on any change to update averages/sorts instantly
+    renderTable();
 }
 
 window.syncViewerToData = function() {
