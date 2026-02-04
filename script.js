@@ -338,7 +338,7 @@ window.renderBoundaries = function() {
     const container = document.getElementById('boundaries-table-container');
     let html = '<table class="boundaries-table"><thead><tr><th style="width:80px">Year</th><th colspan="4" style="text-align:center">Paper 2 (S / 1 / 2 / 3)</th><th colspan="4" style="text-align:center">Paper 3 (S / 1 / 2 / 3)</th></tr></thead><tbody>';
     
-    for (let y = 2024; y >= 2008; y--) {
+    for (let y = 2025; y >= 2008; y--) {
         const p2 = GRADE_DATA[2][y] || {S:'-',1:'-',2:'-',3:'-'};
         const p3 = GRADE_DATA[3][y] || {S:'-',1:'-',2:'-',3:'-'};
         
