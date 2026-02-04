@@ -14,6 +14,7 @@
             <div class="mode-tabs">
                 <button id="tab-practice" class="mode-btn active" onclick="switchMode('practice')">Practice Mode</button>
                 <button id="tab-mock" class="mode-btn" onclick="switchMode('mock')">Mock Exam</button>
+		<button id="tab-boundaries" class="mode-btn" onclick="switchMode('boundaries')">Grade Boundaries</button>
                 <button id="tab-info" class="mode-btn" onclick="switchMode('info')">Information</button>
                 <button id="tab-resources" class="mode-btn" onclick="switchMode('resources')">Resources</button>
             </div>
@@ -112,7 +113,7 @@
             </div>
             <div class="table-wrapper">
                 <table>
-                    <thead>
+                    <thead id="tracker-thead">
                         <tr>
                             <th class="col-check sortable" onclick="toggleSort('done')">✓</th>
                             <th class="col-id sortable" onclick="toggleSort('id')">Question</th>
@@ -127,6 +128,15 @@
                 </table>
             </div>
         </div>
+
+	<div id="boundaries-panel" class="text-panel" style="display:none;">
+            <div class="text-content">
+                <h2>Historical Grade Boundaries</h2>
+		<p>Boundaries for Grade S, 1, 2, and 3 for past years.</p>
+		<div id="boundaries-table-container">
+			</div>
+            </div>
+	</div>
 
         <div id="info-panel" class="text-panel" style="display:none;">
             <div class="text-content">

@@ -306,6 +306,7 @@ window.switchMode = function(mode) {
     document.getElementById('tracker-panel').style.display = 'none';
     document.getElementById('info-panel').style.display = 'none';
     document.getElementById('resources-panel').style.display = 'none';
+    document.getElementById('boundaries-panel').style.display = 'none'; // Ensure hidden
 
     if (mode === 'practice') {
         document.getElementById('controls-practice').style.display = 'flex';
@@ -321,12 +322,34 @@ window.switchMode = function(mode) {
         document.getElementById('tracker-title').innerText = "Mock Exam (12 Questions)";
         renderTable();
     } 
+    else if (mode === 'boundaries') {
+        renderBoundaries(); // Render the table on switch
+        document.getElementById('boundaries-panel').style.display = 'flex';
+    }
     else if (mode === 'info') {
         document.getElementById('info-panel').style.display = 'flex';
     } 
     else if (mode === 'resources') {
         document.getElementById('resources-panel').style.display = 'flex';
     }
+}
+
+window.renderBoundaries = function() {
+    const container = document.getElementById('boundaries-table-container');
+    let html = '<table class="boundaries-table"><thead><tr><th style="width:80px">Year</th><th colspan="4" style="text-align:center">Paper 2 (S / 1 / 2 / 3)</th><th colspan="4" style="text-align:center">Paper 3 (S / 1 / 2 / 3)</th></tr></thead><tbody>';
+    
+    for (let y = 2024; y >= 2008; y--) {
+        const p2 = GRADE_DATA[2][y] || {S:'-',1:'-',2:'-',3:'-'};
+        const p3 = GRADE_DATA[3][y] || {S:'-',1:'-',2:'-',3:'-'};
+        
+        html += `<tr>
+            <td style="font-weight:bold">${y}</td>
+            <td>${p2.S}</td><td>${p2[1]}</td><td>${p2[2]}</td><td>${p2[3]}</td>
+            <td>${p3.S}</td><td>${p3[1]}</td><td>${p3[2]}</td><td>${p3[3]}</td>
+        </tr>`;
+    }
+    html += '</tbody></table>';
+    container.innerHTML = html;
 }
 
 window.generateMock = function() {
@@ -497,11 +520,42 @@ window.toggleSort = function(column) {
 
 window.renderTable = function() {
     const tbody = document.getElementById('tracker-body');
+    const thead = document.getElementById('tracker-thead'); // Grab header for dynamic changes
     const avgDisplay = document.getElementById('average-display');
     tbody.innerHTML = '';
     
     let list = [];
-    if (currentMode === 'practice') {
+
+    // --- DYNAMIC HEADER CONSTRUCTION ---
+    if (currentMode === 'mock') {
+        // Mock Mode: Numbering instead of Name, No Topic
+        thead.innerHTML = `
+            <tr>
+                <th class="col-check sortable" onclick="toggleSort('done')">✓</th>
+                <th class="col-id sortable" onclick="toggleSort('id')">#</th> <th class="col-date sortable" onclick="toggleSort('date')">Date</th>
+                <th class="col-marks sortable" onclick="toggleSort('marks')">Marks</th>
+                <th class="col-notes sortable" onclick="toggleSort('notes')">Notes</th>
+            </tr>
+        `;
+
+        if (currentMockIds.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No mock generated.</td></tr>';
+            return;
+        }
+        list = allQuestions.filter(q => currentMockIds.includes(q.id));
+    } else {
+        // Practice Mode: Standard View
+        thead.innerHTML = `
+            <tr>
+                <th class="col-check sortable" onclick="toggleSort('done')">✓</th>
+                <th class="col-id sortable" onclick="toggleSort('id')">Question</th>
+                <th class="col-topic sortable" onclick="toggleSort('topic')">Topic</th>
+                <th class="col-date sortable" onclick="toggleSort('date')">Date</th>
+                <th class="col-marks sortable" onclick="toggleSort('marks')">Marks</th>
+                <th class="col-notes sortable" onclick="toggleSort('notes')">Notes</th>
+            </tr>
+        `;
+
         const f = {
             p2: document.getElementById('chk-p2').checked,
             p3: document.getElementById('chk-p3').checked,
@@ -519,12 +573,6 @@ window.renderTable = function() {
             if (f.topic !== 'all' && q.topic !== f.topic) return false;
             return true;
         });
-    } else {
-        if (currentMockIds.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">No mock generated.</td></tr>';
-            return;
-        }
-        list = allQuestions.filter(q => currentMockIds.includes(q.id));
     }
 
     // --- Calculate Average Mark for VISIBLE list ---
@@ -604,16 +652,28 @@ window.renderTable = function() {
         }
     }
 
-    list.forEach(q => {
+    list.forEach((q, index) => {
         const data = userProgress[q.id] || { done: false, date: '', marks: '', notes: '' };
         const tr = document.createElement('tr');
         if (data.done) tr.style.backgroundColor = "#e8f8f5";
         
-        const label = q.paper === 2 ? "II" : "III";
+        let nameColumn, topicColumn;
+
+        if (currentMode === 'mock') {
+            // Mock Mode: Number (1, 2, 3...) and NO Topic
+            nameColumn = `<td class="col-id"><span class="clickable-name" onclick="loadFromTable('${q.id}')">${index + 1}</span></td>`;
+            topicColumn = ''; // Empty string removes the column
+        } else {
+            // Practice Mode: Full Name and Topic
+            const paperLabel = q.paper === 2 ? "II" : "III";
+            nameColumn = `<td class="col-id"><span class="clickable-name" onclick="loadFromTable('${q.id}')">${q.year} ${paperLabel} Q${q.number}</span></td>`;
+            topicColumn = `<td class="col-topic">${q.topic}</td>`;
+        }
+        
         tr.innerHTML = `
             <td class="col-check"><input type="checkbox" ${data.done ? 'checked' : ''} onchange="updateProgress('${q.id}', 'done', this.checked)"></td>
-            <td class="col-id"><span class="clickable-name" onclick="loadFromTable('${q.id}')">${q.year} ${label} Q${q.number}</span></td>
-            <td class="col-topic">${q.topic}</td>
+            ${nameColumn}
+            ${topicColumn}
             <td class="col-date"><input type="date" value="${data.date}" onchange="updateProgress('${q.id}', 'date', this.value)"></td>
             <td class="col-marks"><input type="number" value="${data.marks}" onchange="updateProgress('${q.id}', 'marks', this.value)"></td>
             <td class="col-notes"><div class="note-cell"><textarea class="note-input" placeholder="Notes..." onchange="updateProgress('${q.id}', 'notes', this.value)">${data.notes}</textarea></div></td>

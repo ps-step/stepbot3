@@ -353,7 +353,7 @@ td { position: relative; }
     overflow-y: auto;
 }
 
-/* --- Text Panels (Info & Resources) --- */
+/* --- Text Panels (Info & Resources & Boundaries) --- */
 .text-panel {
     flex: 1;
     overflow-y: auto;       /* Creates the scrollbar for this panel */
@@ -405,6 +405,29 @@ td { position: relative; }
     text-decoration: underline;
     color: #1a5276;
 }
+
+/* Boundaries Table */
+.boundaries-table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+}
+
+.boundaries-table th, .boundaries-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+.boundaries-table th {
+    background-color: #34495e;
+    color: white;
+}
+
+.boundaries-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
 
 /* --- Modal Styles --- */
 .modal-backdrop {
