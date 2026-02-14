@@ -791,84 +791,94 @@ function loadFilters() {
         }
 
         // 2. Construct the HTML for the Print Window
-        // We remove margins/padding from body to prevent accidental blank pages
         let content = `
             <!DOCTYPE html>
             <html>
             <head>
                 <title>Mock Exam</title>
                 <style>
-                    @media print {
-                        @page { margin: 0; size: auto; }
-                        body { margin: 0; }
+                    /* Remove browser headers/footers (URL, Date, Page #) */
+                    @page { 
+                        margin: 0 !important; 
+                        size: auto; 
                     }
-                    body { margin: 0; padding: 0; font-family: sans-serif; }
+                    
+                    @media print {
+                        body { margin: 0 !important; padding: 0 !important; }
+                        /* Force background graphics if user settings allow */
+                        * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    }
+
+                    body { 
+                        margin: 0; 
+                        padding: 0; 
+                        font-family: 'Segoe UI', sans-serif; 
+                        background: white;
+                    }
                     
                     .page { 
                         width: 100vw; 
                         height: 100vh; 
                         position: relative; 
                         page-break-after: always; 
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: center;
-                        align-items: center;
-                        overflow: hidden; /* Prevents spillover causing blank pages */
-                    }
-
-                    .cover-img {
-                        max-width: 100%;
-                        max-height: 100%;
-                        object-fit: contain;
-                    }
-
-                    .question-container {
-                        width: 95%;
-                        height: 90%;
+                        break-after: page;
+                        overflow: hidden; /* CRITICAL: Prevents blank pages caused by spillover */
                         display: flex;
                         justify-content: center;
                         align-items: center;
                     }
 
+                    /* Image Styling */
+                    img.cover-img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: contain; 
+                    }
+                    
                     img.question-img { 
-                        max-width: 100%; 
-                        max-height: 100%; 
+                        max-width: 96%; 
+                        max-height: 96vh; /* Leave slight gap to prevent page break trigger */
                         object-fit: contain; 
                     }
 
+                    /* Question Number Styling */
                     .q-number {
                         position: absolute;
-                        top: 20px;
-                        left: 20px;
-                        font-size: 24px;
-                        font-weight: bold;
-                        color: #333;
-                        background: rgba(255,255,255,0.8);
-                        padding: 5px 10px;
-                        border: 1px solid #ccc;
+                        top: 30px;
+                        left: 30px;
+                        font-size: 40px; /* Much larger */
+                        font-weight: 800;
+                        color: #2c3e50;
+                        background: rgba(255,255,255,0.9);
+                        padding: 5px 20px;
+                        border: 2px solid #2c3e50;
+                        border-radius: 8px;
+                        z-index: 10;
                     }
 
-                    /* Fallback Cover Styling */
+                    /* Info Page Styling */
+                    .info-page {
+                        flex-direction: column;
+                        justify-content: flex-start;
+                        align-items: flex-start;
+                        padding: 50px;
+                        box-sizing: border-box;
+                        height: auto; 
+                        min-height: 100vh;
+                    }
+
                     .cover-fallback {
                         text-align: center;
                     }
-                    .cover-fallback h1 { font-size: 4em; color: #333; margin-bottom: 0.5em;}
-                    .cover-fallback p { font-size: 1.5em; color: #666; }
-                    
-                    .info-page {
-                        justify-content: flex-start;
-                        align-items: flex-start;
-                        padding: 40px;
-                        box-sizing: border-box;
-                        height: auto; /* Allow info page to scroll if needed */
-                        min-height: 100vh;
-                    }
+                    .cover-fallback h1 { font-size: 5em; margin-bottom: 0.2em; color: #333; }
+                    .cover-fallback p { font-size: 2em; color: #666; }
                 </style>
             </head>
             <body>
                 <div class="page">
                     <img src="cover.png" class="cover-img" alt="Mock Cover" onerror="this.style.display='none'; document.getElementById('fallback').style.display='block'">
                     <div id="fallback" class="cover-fallback" style="display:none;">
+                        <div style="height:30vh"></div>
                         <h1>STEP Mock Exam</h1>
                         <p>Generated by StepBot3</p>
                         <p>${new Date().toLocaleDateString()}</p>
@@ -876,15 +886,13 @@ function loadFilters() {
                 </div>
         `;
 
-        // Add Question Pages with Number in Top-Left
+        // Add Question Pages
         currentMockIds.forEach((id, index) => {
             const q = allQuestions.find(item => item.id === id);
             content += `
                 <div class="page">
                     <div class="q-number">Question ${index + 1}</div>
-                    <div class="question-container">
-                        <img src="questions/${q.filename}" class="question-img" loading="eager">
-                    </div>
+                    <img src="questions/${q.filename}" class="question-img" loading="eager">
                 </div>
             `;
         });
@@ -893,15 +901,15 @@ function loadFilters() {
         content += `
                 <div class="page info-page">
                     ${sourcesHtml}
-                    <div style="height: 40px;"></div>
+                    <div style="height: 50px;"></div>
                     ${boundariesHtml}
                 </div>
                 <script>
-                    // Auto-trigger print when images are loaded
+                    // Auto-trigger print when loaded
                     window.onload = function() {
                         setTimeout(() => { 
                             window.print(); 
-                        }, 500);
+                        }, 800);
                     };
                 </script>
             </body>
