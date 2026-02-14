@@ -753,6 +753,8 @@ function loadFilters() {
         // 1. Calculate Grade Boundaries & Build Sources List
         let sums = { "S": 0, "1": 0, "2": 0, "3": 0 };
         let count = 0;
+        
+        // Start the sources list
         let sourcesHtml = '<h3>Question Sources</h3><ul style="list-style:none; padding:0; font-family: monospace; font-size: 1.1em;">';
 
         currentMockIds.forEach((id, index) => {
@@ -789,66 +791,82 @@ function loadFilters() {
         }
 
         // 2. Construct the HTML for the Print Window
+        // We remove margins/padding from body to prevent accidental blank pages
         let content = `
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Mock Exam - Print View</title>
+                <title>Mock Exam</title>
                 <style>
-                    body { margin: 0; padding: 0; box-sizing: border-box; }
-                    
-                    /* Page Setup */
-                    .page { 
-                        width: 100%; 
-                        min-height: 98vh; /* Ensures full page height */
-                        position: relative; 
-                        display: flex; 
-                        flex-direction: column; 
-                        align-items: center; 
-                        justify-content: center;
-                        padding: 20px;
-                        box-sizing: border-box;
+                    @media print {
+                        @page { margin: 0; size: auto; }
+                        body { margin: 0; }
                     }
+                    body { margin: 0; padding: 0; font-family: sans-serif; }
                     
-                    /* Force Page Breaks */
-                    .page-break { 
+                    .page { 
+                        width: 100vw; 
+                        height: 100vh; 
+                        position: relative; 
                         page-break-after: always; 
-                        break-after: page; 
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
+                        overflow: hidden; /* Prevents spillover causing blank pages */
                     }
 
-                    /* Image Styling */
-                    img.question-img { 
-                        max-width: 100%; 
-                        max-height: 95vh; 
-                        object-fit: contain; 
-                        display: block;
-                    }
-                    
-                    img.cover-img {
-                        width: 100%;
-                        max-height: 100vh;
+                    .cover-img {
+                        max-width: 100%;
+                        max-height: 100%;
                         object-fit: contain;
                     }
 
-                    /* Back Page Styling */
-                    .info-page { 
-                        justify-content: flex-start; 
-                        align-items: flex-start; 
-                        padding: 50px; 
+                    .question-container {
+                        width: 95%;
+                        height: 90%;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
                     }
-                    
+
+                    img.question-img { 
+                        max-width: 100%; 
+                        max-height: 100%; 
+                        object-fit: contain; 
+                    }
+
+                    .q-number {
+                        position: absolute;
+                        top: 20px;
+                        left: 20px;
+                        font-size: 24px;
+                        font-weight: bold;
+                        color: #333;
+                        background: rgba(255,255,255,0.8);
+                        padding: 5px 10px;
+                        border: 1px solid #ccc;
+                    }
+
                     /* Fallback Cover Styling */
                     .cover-fallback {
                         text-align: center;
-                        font-family: sans-serif;
-                        margin-top: 30vh;
                     }
                     .cover-fallback h1 { font-size: 4em; color: #333; margin-bottom: 0.5em;}
                     .cover-fallback p { font-size: 1.5em; color: #666; }
+                    
+                    .info-page {
+                        justify-content: flex-start;
+                        align-items: flex-start;
+                        padding: 40px;
+                        box-sizing: border-box;
+                        height: auto; /* Allow info page to scroll if needed */
+                        min-height: 100vh;
+                    }
                 </style>
             </head>
             <body>
-                <div class="page page-break">
+                <div class="page">
                     <img src="cover.png" class="cover-img" alt="Mock Cover" onerror="this.style.display='none'; document.getElementById('fallback').style.display='block'">
                     <div id="fallback" class="cover-fallback" style="display:none;">
                         <h1>STEP Mock Exam</h1>
@@ -858,14 +876,14 @@ function loadFilters() {
                 </div>
         `;
 
-        // Add Question Pages
+        // Add Question Pages with Number in Top-Left
         currentMockIds.forEach((id, index) => {
             const q = allQuestions.find(item => item.id === id);
             content += `
-                <div class="page page-break">
-                    <img src="questions/${q.filename}" class="question-img" loading="eager">
-                    <div style="position:absolute; bottom:10px; right:20px; color:#aaa; font-family:sans-serif; font-size:12px;">
-                        Question ${index + 1} (Ref: ${q.id})
+                <div class="page">
+                    <div class="q-number">Question ${index + 1}</div>
+                    <div class="question-container">
+                        <img src="questions/${q.filename}" class="question-img" loading="eager">
                     </div>
                 </div>
             `;
@@ -878,23 +896,23 @@ function loadFilters() {
                     <div style="height: 40px;"></div>
                     ${boundariesHtml}
                 </div>
+                <script>
+                    // Auto-trigger print when images are loaded
+                    window.onload = function() {
+                        setTimeout(() => { 
+                            window.print(); 
+                        }, 500);
+                    };
+                </script>
             </body>
             </html>
         `;
 
-        // 3. Open, Write, and Print
+        // 3. Open Window
         const win = window.open('', '_blank');
         if (!win) { alert("Please allow popups to print."); return; }
         
         win.document.write(content);
         win.document.close();
-        
-        // Wait for content (specifically images) to load before triggering print
-        win.onload = function() {
-            win.focus();
-            setTimeout(() => { // Small delay to ensure rendering matches
-                win.print();
-            }, 500);
-        };
     }
 }
