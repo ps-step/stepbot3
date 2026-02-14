@@ -754,7 +754,7 @@ function loadFilters() {
         let sums = { "S": 0, "1": 0, "2": 0, "3": 0 };
         let count = 0;
         
-        // Start the sources list
+        // Start the sources list (Keep Back Page as Times New Roman)
         let sourcesHtml = '<h3>Question Sources</h3><ul style="list-style:none; padding:0; font-family: \'Times New Roman\', serif; font-size: 1.1em;">';
 
         currentMockIds.forEach((id, index) => {
@@ -811,6 +811,7 @@ function loadFilters() {
                     body { 
                         margin: 0; 
                         padding: 0; 
+                        /* Default font for document (covers, back page) */
                         font-family: 'Times New Roman', Times, serif; 
                         background: white;
                     }
@@ -847,10 +848,7 @@ function loadFilters() {
                         display: block;
                     }
 
-                    /* THE MASK BAR
-                    - 315px / 2481px is approx 12.7%. 
-                    - We use 12.8% to be safe and cover everything.
-                    */
+                    /* THE MASK BAR */
                     .mask-bar {
                         position: absolute;
                         top: 0;
@@ -858,20 +856,25 @@ function loadFilters() {
                         width: 12.8%;
                         height: 100%;
                         background: white;
-                        z-index: 5; /* Above image, below number */
+                        z-index: 5; 
                     }
 
+                    /* THE QUESTION NUMBER */
                     .q-number {
                         position: absolute;
                         top: 6%; 
                         left: 0;
                         width: 12.8%; /* Centered within the mask bar */
                         text-align: center;
-                        font-size: 3.5rem; 
+                        
+                        /* FONT CHANGES HERE */
+                        font-family: Arial, Helvetica, sans-serif; 
+                        font-size: 2.5rem; /* Reduced size */
+                        
                         font-weight: bold;
                         color: #000;
                         line-height: 1;
-                        z-index: 10; /* Above the mask */
+                        z-index: 10;
                     }
 
                     /* Info Page Styling */
