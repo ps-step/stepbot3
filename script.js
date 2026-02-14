@@ -804,14 +804,13 @@ function loadFilters() {
                     
                     @media print {
                         body { margin: 0 !important; padding: 0 !important; }
-                        /* Force background graphics */
+                        /* Force background colors (needed for the white mask to work) */
                         * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                     }
 
                     body { 
                         margin: 0; 
                         padding: 0; 
-                        /* Professional Exam Font */
                         font-family: 'Times New Roman', Times, serif; 
                         background: white;
                     }
@@ -825,11 +824,9 @@ function loadFilters() {
                         overflow: hidden; 
                         display: flex;
                         flex-direction: column;
-                        /* Left alignment ensures image whitespace aligns with our number */
                         align-items: flex-start; 
                     }
 
-                    /* Center only the cover page */
                     .page.cover-page {
                         justify-content: center;
                         align-items: center;
@@ -841,33 +838,40 @@ function loadFilters() {
                         object-fit: contain; 
                     }
                     
-                    /* Question Image Styling */
                     img.question-img { 
                         width: 100%;
                         height: auto;
                         max-height: 98vh;
                         object-fit: contain; 
-                        /* Ensure image starts at left so whitespace is predictable */
                         object-position: left top; 
                         display: block;
                     }
 
-                    /* Question Number Styling 
-                    - Positioned inside the 315px whitespace (approx 12.7% of width)
-                    - Placed ~8% down the page (approx 300px on full res)
+                    /* THE MASK BAR
+                    - 315px / 2481px is approx 12.7%. 
+                    - We use 12.8% to be safe and cover everything.
                     */
+                    .mask-bar {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 12.8%;
+                        height: 100%;
+                        background: white;
+                        z-index: 5; /* Above image, below number */
+                    }
+
                     .q-number {
                         position: absolute;
                         top: 6%; 
                         left: 0;
-                        width: 10%; /* Fits safely within the 12.7% whitespace */
-                        text-align: right;
+                        width: 12.8%; /* Centered within the mask bar */
+                        text-align: center;
                         font-size: 3.5rem; 
                         font-weight: bold;
                         color: #000;
                         line-height: 1;
-                        z-index: 10;
-                        pointer-events: none;
+                        z-index: 10; /* Above the mask */
                     }
 
                     /* Info Page Styling */
@@ -899,11 +903,12 @@ function loadFilters() {
                 </div>
         `;
 
-        // Add Question Pages
+        // Add Question Pages with Mask and Number
         currentMockIds.forEach((id, index) => {
             const q = allQuestions.find(item => item.id === id);
             content += `
                 <div class="page">
+                    <div class="mask-bar"></div>
                     <div class="q-number">${index + 1}</div>
                     <img src="questions/${q.filename}" class="question-img" loading="eager">
                 </div>
