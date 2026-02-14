@@ -755,7 +755,7 @@ function loadFilters() {
         let count = 0;
         
         // Start the sources list
-        let sourcesHtml = '<h3>Question Sources</h3><ul style="list-style:none; padding:0; font-family: monospace; font-size: 1.1em;">';
+        let sourcesHtml = '<h3>Question Sources</h3><ul style="list-style:none; padding:0; font-family: \'Times New Roman\', serif; font-size: 1.1em;">';
 
         currentMockIds.forEach((id, index) => {
             const q = allQuestions.find(item => item.id === id);
@@ -779,7 +779,7 @@ function loadFilters() {
         let boundariesHtml = '<h3>Estimated Grade Boundaries</h3><p><em>(Based on average of constituent questions)</em></p>';
         if (count > 0) {
             boundariesHtml += `
-            <table border="1" style="border-collapse: collapse; width: 100%; max-width: 500px; margin-top:10px; font-family: sans-serif;">
+            <table border="1" style="border-collapse: collapse; width: 100%; max-width: 500px; margin-top:10px; font-family: 'Times New Roman', serif;">
                 <tr style="background:#eee;"><th style="padding:10px;">Grade</th><th style="padding:10px;">Mark / 120</th></tr>
                 <tr><td style="padding:10px; text-align:center; font-weight:bold;">S</td><td style="padding:10px; text-align:center;">${Math.round(sums["S"]/count)}</td></tr>
                 <tr><td style="padding:10px; text-align:center; font-weight:bold;">1</td><td style="padding:10px; text-align:center;">${Math.round(sums["1"]/count)}</td></tr>
@@ -797,7 +797,6 @@ function loadFilters() {
             <head>
                 <title>Mock Exam</title>
                 <style>
-                    /* Remove browser headers/footers (URL, Date, Page #) */
                     @page { 
                         margin: 0 !important; 
                         size: auto; 
@@ -805,14 +804,15 @@ function loadFilters() {
                     
                     @media print {
                         body { margin: 0 !important; padding: 0 !important; }
-                        /* Force background graphics if user settings allow */
+                        /* Force background graphics */
                         * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                     }
 
                     body { 
                         margin: 0; 
                         padding: 0; 
-                        font-family: 'Segoe UI', sans-serif; 
+                        /* Professional Exam Font */
+                        font-family: 'Times New Roman', Times, serif; 
                         background: white;
                     }
                     
@@ -822,43 +822,56 @@ function loadFilters() {
                         position: relative; 
                         page-break-after: always; 
                         break-after: page;
-                        overflow: hidden; /* CRITICAL: Prevents blank pages caused by spillover */
+                        overflow: hidden; 
                         display: flex;
+                        flex-direction: column;
+                        /* Left alignment ensures image whitespace aligns with our number */
+                        align-items: flex-start; 
+                    }
+
+                    /* Center only the cover page */
+                    .page.cover-page {
                         justify-content: center;
                         align-items: center;
                     }
 
-                    /* Image Styling */
                     img.cover-img {
-                        width: 100%;
-                        height: 100%;
+                        max-width: 100%;
+                        max-height: 100%;
                         object-fit: contain; 
                     }
                     
+                    /* Question Image Styling */
                     img.question-img { 
-                        max-width: 96%; 
-                        max-height: 96vh; /* Leave slight gap to prevent page break trigger */
+                        width: 100%;
+                        height: auto;
+                        max-height: 98vh;
                         object-fit: contain; 
+                        /* Ensure image starts at left so whitespace is predictable */
+                        object-position: left top; 
+                        display: block;
                     }
 
-                    /* Question Number Styling */
+                    /* Question Number Styling 
+                    - Positioned inside the 315px whitespace (approx 12.7% of width)
+                    - Placed ~8% down the page (approx 300px on full res)
+                    */
                     .q-number {
                         position: absolute;
-                        top: 30px;
-                        left: 30px;
-                        font-size: 40px; /* Much larger */
-                        font-weight: 800;
-                        color: #2c3e50;
-                        background: rgba(255,255,255,0.9);
-                        padding: 5px 20px;
-                        border: 2px solid #2c3e50;
-                        border-radius: 8px;
+                        top: 6%; 
+                        left: 0;
+                        width: 10%; /* Fits safely within the 12.7% whitespace */
+                        text-align: right;
+                        font-size: 3.5rem; 
+                        font-weight: bold;
+                        color: #000;
+                        line-height: 1;
                         z-index: 10;
+                        pointer-events: none;
                     }
 
                     /* Info Page Styling */
                     .info-page {
-                        flex-direction: column;
                         justify-content: flex-start;
                         align-items: flex-start;
                         padding: 50px;
@@ -875,7 +888,7 @@ function loadFilters() {
                 </style>
             </head>
             <body>
-                <div class="page">
+                <div class="page cover-page">
                     <img src="cover.png" class="cover-img" alt="Mock Cover" onerror="this.style.display='none'; document.getElementById('fallback').style.display='block'">
                     <div id="fallback" class="cover-fallback" style="display:none;">
                         <div style="height:30vh"></div>
@@ -891,7 +904,7 @@ function loadFilters() {
             const q = allQuestions.find(item => item.id === id);
             content += `
                 <div class="page">
-                    <div class="q-number">Question ${index + 1}</div>
+                    <div class="q-number">${index + 1}</div>
                     <img src="questions/${q.filename}" class="question-img" loading="eager">
                 </div>
             `;
