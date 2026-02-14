@@ -746,4 +746,155 @@ function loadFilters() {
         });
         topicSelect.appendChild(group);
     }
+
+    window.printMock = function() {
+        if (currentMockIds.length === 0) { alert("Generate a mock first."); return; }
+
+        // 1. Calculate Grade Boundaries & Build Sources List
+        let sums = { "S": 0, "1": 0, "2": 0, "3": 0 };
+        let count = 0;
+        let sourcesHtml = '<h3>Question Sources</h3><ul style="list-style:none; padding:0; font-family: monospace; font-size: 1.1em;">';
+
+        currentMockIds.forEach((id, index) => {
+            const q = allQuestions.find(item => item.id === id);
+            
+            // Accumulate Grade Data
+            if (q && GRADE_DATA[q.paper] && GRADE_DATA[q.paper][q.year]) {
+                const b = GRADE_DATA[q.paper][q.year];
+                sums["S"]+=b["S"]; sums["1"]+=b["1"]; sums["2"]+=b["2"]; sums["3"]+=b["3"];
+                count++;
+            }
+
+            // Add to Sources List
+            const label = q.paper === 2 ? "II" : "III";
+            sourcesHtml += `<li style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:4px;">
+                <strong>Q${index+1}:</strong> ${q.year} STEP ${label} Q${q.number} <span style="color:#666">(${q.topic})</span>
+            </li>`;
+        });
+        sourcesHtml += '</ul>';
+
+        // Build Boundaries Table
+        let boundariesHtml = '<h3>Estimated Grade Boundaries</h3><p><em>(Based on average of constituent questions)</em></p>';
+        if (count > 0) {
+            boundariesHtml += `
+            <table border="1" style="border-collapse: collapse; width: 100%; max-width: 500px; margin-top:10px; font-family: sans-serif;">
+                <tr style="background:#eee;"><th style="padding:10px;">Grade</th><th style="padding:10px;">Mark / 120</th></tr>
+                <tr><td style="padding:10px; text-align:center; font-weight:bold;">S</td><td style="padding:10px; text-align:center;">${Math.round(sums["S"]/count)}</td></tr>
+                <tr><td style="padding:10px; text-align:center; font-weight:bold;">1</td><td style="padding:10px; text-align:center;">${Math.round(sums["1"]/count)}</td></tr>
+                <tr><td style="padding:10px; text-align:center; font-weight:bold;">2</td><td style="padding:10px; text-align:center;">${Math.round(sums["2"]/count)}</td></tr>
+                <tr><td style="padding:10px; text-align:center; font-weight:bold;">3</td><td style="padding:10px; text-align:center;">${Math.round(sums["3"]/count)}</td></tr>
+            </table>`;
+        } else {
+            boundariesHtml += "<p>No historical data available for these questions.</p>";
+        }
+
+        // 2. Construct the HTML for the Print Window
+        let content = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Mock Exam - Print View</title>
+                <style>
+                    body { margin: 0; padding: 0; box-sizing: border-box; }
+                    
+                    /* Page Setup */
+                    .page { 
+                        width: 100%; 
+                        min-height: 98vh; /* Ensures full page height */
+                        position: relative; 
+                        display: flex; 
+                        flex-direction: column; 
+                        align-items: center; 
+                        justify-content: center;
+                        padding: 20px;
+                        box-sizing: border-box;
+                    }
+                    
+                    /* Force Page Breaks */
+                    .page-break { 
+                        page-break-after: always; 
+                        break-after: page; 
+                    }
+
+                    /* Image Styling */
+                    img.question-img { 
+                        max-width: 100%; 
+                        max-height: 95vh; 
+                        object-fit: contain; 
+                        display: block;
+                    }
+                    
+                    img.cover-img {
+                        width: 100%;
+                        max-height: 100vh;
+                        object-fit: contain;
+                    }
+
+                    /* Back Page Styling */
+                    .info-page { 
+                        justify-content: flex-start; 
+                        align-items: flex-start; 
+                        padding: 50px; 
+                    }
+                    
+                    /* Fallback Cover Styling */
+                    .cover-fallback {
+                        text-align: center;
+                        font-family: sans-serif;
+                        margin-top: 30vh;
+                    }
+                    .cover-fallback h1 { font-size: 4em; color: #333; margin-bottom: 0.5em;}
+                    .cover-fallback p { font-size: 1.5em; color: #666; }
+                </style>
+            </head>
+            <body>
+                <div class="page page-break">
+                    <img src="cover.png" class="cover-img" alt="Mock Cover" onerror="this.style.display='none'; document.getElementById('fallback').style.display='block'">
+                    <div id="fallback" class="cover-fallback" style="display:none;">
+                        <h1>STEP Mock Exam</h1>
+                        <p>Generated by StepBot3</p>
+                        <p>${new Date().toLocaleDateString()}</p>
+                    </div>
+                </div>
+        `;
+
+        // Add Question Pages
+        currentMockIds.forEach((id, index) => {
+            const q = allQuestions.find(item => item.id === id);
+            content += `
+                <div class="page page-break">
+                    <img src="questions/${q.filename}" class="question-img" loading="eager">
+                    <div style="position:absolute; bottom:10px; right:20px; color:#aaa; font-family:sans-serif; font-size:12px;">
+                        Question ${index + 1} (Ref: ${q.id})
+                    </div>
+                </div>
+            `;
+        });
+
+        // Add Back Page
+        content += `
+                <div class="page info-page">
+                    ${sourcesHtml}
+                    <div style="height: 40px;"></div>
+                    ${boundariesHtml}
+                </div>
+            </body>
+            </html>
+        `;
+
+        // 3. Open, Write, and Print
+        const win = window.open('', '_blank');
+        if (!win) { alert("Please allow popups to print."); return; }
+        
+        win.document.write(content);
+        win.document.close();
+        
+        // Wait for content (specifically images) to load before triggering print
+        win.onload = function() {
+            win.focus();
+            setTimeout(() => { // Small delay to ensure rendering matches
+                win.print();
+            }, 500);
+        };
+    }
 }
