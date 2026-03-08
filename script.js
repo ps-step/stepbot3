@@ -488,6 +488,19 @@ window.loadFromTable = function(id) {
 function displayQuestion(q) {
     currentQuestionId = q.id;
     const label = q.paper === 2 ? "II" : "III";
+
+    // --- ADD THIS NEW BLOCK ---
+    const msgBox = document.getElementById('custom-message-box');
+    const targetQuestionId = "2024-3-7"; // e.g., "2023-2-5" or whatever your ID format is
+
+    if (q.id === targetQuestionId) {
+        msgBox.innerText = "Best STEP question of all time btw";
+        msgBox.style.display = "block";
+    } else {
+        msgBox.style.display = "none";
+    }
+
+
     if (currentMode === 'mock') {
         // Hides the topic in Mock mode
         document.getElementById('question-info').innerText = `${q.year} | Paper ${label} | Q${q.number}`;
