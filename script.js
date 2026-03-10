@@ -759,48 +759,6 @@ window.generatePicker = function() {
         }
     });
 
-    // Fisher-Yates Shuffle Function
-    const shuffle = (array) => {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-    };
-
-    shuffle(attemptedPure);
-    shuffle(attemptedMech);
-    shuffle(attemptedStats);
-
-    // Pick 8 Pure, 2 Mech, 2 Stats
-    currentPickerIds = [];
-    for(let i=0; i<8; i++) currentPickerIds.push(attemptedPure[i] ? attemptedPure[i].id : null);
-    for(let i=0; i<2; i++) currentPickerIds.push(attemptedMech[i] ? attemptedMech[i].id : null);
-    for(let i=0; i<2; i++) currentPickerIds.push(attemptedStats[i] ? attemptedStats[i].id : null);
-
-    pickerRevealed = false;
-    document.getElementById('btn-reveal-picker').disabled = false;
-    renderPickerTable();
-}
-
-// --- QUESTION PICKER LOGIC ---
-let currentPickerIds = [];
-let pickerRevealed = false;
-
-window.generatePicker = function() {
-    let attemptedPure = [];
-    let attemptedMech = [];
-    let attemptedStats = [];
-
-    // Filter to questions that are done AND have a numeric mark
-    allQuestions.forEach(q => {
-        const prog = userProgress[q.id];
-        if (prog && prog.done && prog.marks !== "" && !isNaN(prog.marks)) {
-            if (q.type === 'pure') attemptedPure.push(q);
-            else if (q.type === 'mechanics') attemptedMech.push(q);
-            else if (q.type === 'stats') attemptedStats.push(q);
-        }
-    });
-
     const shuffle = (array) => {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
