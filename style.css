@@ -214,7 +214,7 @@ main {
 }
 
 /* --- Right Panel: Tracker Table --- */
-#tracker-panel {
+#tracker-panel, #picker-panel {
     flex: 1; 
     padding: 0;
     background: white;
