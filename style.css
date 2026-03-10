@@ -214,13 +214,32 @@ main {
 }
 
 /* --- Right Panel: Tracker Table --- */
-#tracker-panel, #picker-panel {
+#tracker-panel {
     flex: 1; 
     padding: 0;
     background: white;
     display: flex;
     flex-direction: column;
     min-width: 450px;
+}
+
+/* --- Question Picker Sidebar Layout --- */
+#picker-panel {
+    display: none; /* Handled by JS */
+    flex-direction: column;
+    
+    /* Adjust this value! 
+       Lower = narrower sidebar / wider image. 
+       Higher = wider sidebar / narrower image. */
+    width: 400px; 
+    
+    /* Optional: Keeps it from getting too squished on smaller laptop screens */
+    min-width: 350px; 
+    
+    padding: 15px;
+    box-sizing: border-box;
+    border-right: 1px solid #ccc; /* Matches standard sidebar dividers */
+    overflow-y: auto; /* Adds a scrollbar if the list gets long */
 }
 
 /* New header styling for avg mark badge */
