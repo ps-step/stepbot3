@@ -231,7 +231,7 @@ main {
     /* Adjust this value! 
        Lower = narrower sidebar / wider image. 
        Higher = wider sidebar / narrower image. */
-    width: 600px; 
+    min-width: 600px;
     
     padding: 15px;
     box-sizing: border-box;
