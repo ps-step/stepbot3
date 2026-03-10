@@ -784,7 +784,7 @@ window.renderPickerTable = function() {
             tr.innerHTML = `
                 <td></td>
                 <td colspan="3" style="color: #e74c3c; font-style: italic; padding: 10px;">
-                    Not enough attempted ${category} questions
+                    Not enough attempted questions for this section.
                 </td>
             `;
         } else {
@@ -800,7 +800,7 @@ window.renderPickerTable = function() {
                     <span class="clickable-name" onclick="loadFromTable('${id}')">Question ${index + 1}</span>
                 </td>
                 <td>
-                    <input type="text" placeholder="Preference / Expected Marks" style="width:90%; padding: 4px; border: 1px solid #ccc; border-radius: 4px;" ${pickerRevealed ? 'disabled' : ''}>
+                    <input type="text" placeholder="Notes" style="width:90%; padding: 4px; border: 1px solid #ccc; border-radius: 4px;" ${pickerRevealed ? 'disabled' : ''}>
                 </td>
                 <td style="text-align:center; font-size: 1.1em; background-color: ${pickerRevealed ? '#e8f8f5' : 'transparent'};">
                     ${marksDisplay}
