@@ -810,7 +810,7 @@ window.renderPickerTable = function() {
                     <span class="clickable-name" onclick="loadFromTable('${id}')">Question ${index + 1}</span>
                 </td>
                 <td>
-                    <input type="text" class="picker-input" placeholder="Preference / Expected Marks" style="width:90%; padding: 4px; border: 1px solid #ccc; border-radius: 4px;">
+                    <input type="text" class="picker-input" placeholder="Notes" style="width:90%; padding: 4px; border: 1px solid #ccc; border-radius: 4px;">
                 </td>
                 <td id="picker-marks-${id}" style="text-align:center; font-size: 1.1em; transition: background-color 0.3s;">
                     <span style="color:#aaa;">?</span>
