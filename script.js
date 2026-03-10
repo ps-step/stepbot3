@@ -498,7 +498,7 @@ function displayQuestion(q) {
     }
 
 
-    if (currentMode === 'mock') {
+    if (currentMode === 'mock' || currentMode === 'picker') {
         // Hides the topic in Mock mode
         document.getElementById('question-info').innerText = `${q.year} | Paper ${label} | Q${q.number}`;
     } else {
@@ -782,40 +782,80 @@ window.generatePicker = function() {
     renderPickerTable();
 }
 
+// --- QUESTION PICKER LOGIC ---
+let currentPickerIds = [];
+let pickerRevealed = false;
+
+window.generatePicker = function() {
+    let attemptedPure = [];
+    let attemptedMech = [];
+    let attemptedStats = [];
+
+    // Filter to questions that are done AND have a numeric mark
+    allQuestions.forEach(q => {
+        const prog = userProgress[q.id];
+        if (prog && prog.done && prog.marks !== "" && !isNaN(prog.marks)) {
+            if (q.type === 'pure') attemptedPure.push(q);
+            else if (q.type === 'mechanics') attemptedMech.push(q);
+            else if (q.type === 'stats') attemptedStats.push(q);
+        }
+    });
+
+    const shuffle = (array) => {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    };
+
+    shuffle(attemptedPure);
+    shuffle(attemptedMech);
+    shuffle(attemptedStats);
+
+    currentPickerIds = [];
+    for(let i=0; i<8; i++) currentPickerIds.push(attemptedPure[i] ? attemptedPure[i].id : null);
+    for(let i=0; i<2; i++) currentPickerIds.push(attemptedMech[i] ? attemptedMech[i].id : null);
+    for(let i=0; i<2; i++) currentPickerIds.push(attemptedStats[i] ? attemptedStats[i].id : null);
+
+    pickerRevealed = false;
+    document.getElementById('btn-reveal-picker').disabled = false;
+    
+    // Hide the results box when generating a new paper
+    const resultsDiv = document.getElementById('picker-results');
+    if (resultsDiv) resultsDiv.style.display = 'none';
+    
+    renderPickerTable();
+}
+
 window.renderPickerTable = function() {
     const tbody = document.getElementById('picker-body');
     tbody.innerHTML = '';
 
     currentPickerIds.forEach((id, index) => {
         const tr = document.createElement('tr');
-        
-        // Determine category for fallbacks
         let category = index < 8 ? "Pure" : (index < 10 ? "Mechanics" : "Statistics");
 
         if (id === null) {
             tr.innerHTML = `
                 <td></td>
                 <td colspan="3" style="color: #e74c3c; font-style: italic; padding: 10px;">
-                    Not enough attempted questions for this section.
+                    Not enough attempted ${category} questions
                 </td>
             `;
         } else {
-            const q = allQuestions.find(item => item.id === id);
-            const actualMarks = userProgress[id].marks;
-            const marksDisplay = pickerRevealed ? `<strong>${actualMarks}</strong> / 20` : `<span style="color:#aaa;">?</span>`;
-
+            // We assign the 'id' to the checkbox value so we can reference it later
             tr.innerHTML = `
                 <td style="text-align:center;">
-                    <input type="checkbox" class="picker-cb" onchange="limitPickerChecks(this)" ${pickerRevealed ? 'disabled' : ''}>
+                    <input type="checkbox" class="picker-cb" value="${id}" onchange="limitPickerChecks(this)">
                 </td>
                 <td>
                     <span class="clickable-name" onclick="loadFromTable('${id}')">Question ${index + 1}</span>
                 </td>
                 <td>
-                    <input type="text" placeholder="Notes" style="width:90%; padding: 4px; border: 1px solid #ccc; border-radius: 4px;" ${pickerRevealed ? 'disabled' : ''}>
+                    <input type="text" class="picker-input" placeholder="Preference / Expected Marks" style="width:90%; padding: 4px; border: 1px solid #ccc; border-radius: 4px;">
                 </td>
-                <td style="text-align:center; font-size: 1.1em; background-color: ${pickerRevealed ? '#e8f8f5' : 'transparent'};">
-                    ${marksDisplay}
+                <td id="picker-marks-${id}" style="text-align:center; font-size: 1.1em; transition: background-color 0.3s;">
+                    <span style="color:#aaa;">?</span>
                 </td>
             `;
         }
@@ -836,15 +876,58 @@ window.revealPickerMarks = function() {
         alert("Generate a selection first.");
         return;
     }
+    
     pickerRevealed = true;
     document.getElementById('btn-reveal-picker').disabled = true;
-    renderPickerTable(); 
 
-    // --- ADD THIS TO UNHIDE THE CONTROLS ---
-    // Only show them if a question is actually open on the screen right now
+    let userSum = 0;
+    let allAvailableMarks = [];
+
+    // 1. Update the existing table rows (this preserves checkboxes & text inputs)
+    const checkboxes = document.querySelectorAll('.picker-cb');
+    checkboxes.forEach(cb => {
+        const id = cb.value;
+        const marks = parseInt(userProgress[id].marks) || 0;
+        
+        // Calculate user score based on checked boxes
+        if (cb.checked) {
+            userSum += marks;
+        }
+        allAvailableMarks.push(marks);
+
+        // Inject the marks into the specific table cell without rebuilding the row
+        const cell = document.getElementById(`picker-marks-${id}`);
+        if (cell) {
+            cell.innerHTML = `<strong>${marks}</strong> / 20`;
+            cell.style.backgroundColor = '#e8f8f5';
+        }
+        
+        // Lock the inputs
+        cb.disabled = true;
+    });
+
+    // Lock the text fields
+    document.querySelectorAll('.picker-input').forEach(input => input.disabled = true);
+
+    // 2. Calculate optimal score (top 6 available marks)
+    allAvailableMarks.sort((a, b) => b - a); // Sort descending
+    let optimalSum = allAvailableMarks.slice(0, 6).reduce((sum, val) => sum + val, 0);
+
+    // 3. Display the calculation results
+    const resultsDiv = document.getElementById('picker-results');
+    if (resultsDiv) {
+        resultsDiv.innerHTML = `
+            <strong>Your Selection Score:</strong> ${userSum} / 120<br>
+            <strong>Optimal Selection Score:</strong> ${optimalSum} / 120
+        `;
+        resultsDiv.style.display = 'block';
+    }
+
+    // Unhide bottom controls if a question is currently open
     const questionInfo = document.getElementById('question-info').innerText;
     if (questionInfo !== "Select a question from the list") {
-        document.getElementById('viewer-controls').style.display = 'block'; 
+        const controls = document.getElementById('viewer-controls');
+        if (controls) controls.style.display = 'block'; 
     }
 }
 
