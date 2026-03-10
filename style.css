@@ -231,10 +231,7 @@ main {
     /* Adjust this value! 
        Lower = narrower sidebar / wider image. 
        Higher = wider sidebar / narrower image. */
-    width: 400px; 
-    
-    /* Optional: Keeps it from getting too squished on smaller laptop screens */
-    min-width: 350px; 
+    width: 200px; 
     
     padding: 15px;
     box-sizing: border-box;
