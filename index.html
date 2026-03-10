@@ -15,7 +15,10 @@
             <div class="mode-tabs">
                 <button id="tab-practice" class="mode-btn active" onclick="switchMode('practice')">Practice Mode</button>
                 <button id="tab-mock" class="mode-btn" onclick="switchMode('mock')">Mock Exam</button>
-		<button id="tab-boundaries" class="mode-btn" onclick="switchMode('boundaries')">Grade Boundaries</button>
+                <button id="tab-boundaries" class="mode-btn" onclick="switchMode('boundaries')">Grade Boundaries</button>
+
+                <button id="tab-picker" class="mode-btn" onclick="switchMode('picker')">Question Picker</button>
+
                 <button id="tab-info" class="mode-btn" onclick="switchMode('info')">Information</button>
                 <button id="tab-resources" class="mode-btn" onclick="switchMode('resources')">Resources</button>
             </div>
@@ -133,14 +136,46 @@
             </div>
         </div>
 
-	<div id="boundaries-panel" class="text-panel" style="display:none;">
+        <div id="boundaries-panel" class="text-panel" style="display:none;">
+                <div class="text-content">
+                    <h2>Historical Grade Boundaries</h2>
+            <p>Boundaries for Grade S, 1, 2, and 3 for past years.</p>
+            <div id="boundaries-table-container">
+                </div>
+                </div>
+        </div>
+
+        <div id="picker-panel" class="text-panel" style="display:none; flex-direction: column; width: 100%; max-width: 800px; padding: 20px;">
             <div class="text-content">
-                <h2>Historical Grade Boundaries</h2>
-		<p>Boundaries for Grade S, 1, 2, and 3 for past years.</p>
-		<div id="boundaries-table-container">
-			</div>
+                <h2>Question Picker Training</h2>
+                <p><strong>The Goal:</strong> Test how well you evaluate a paper and identify your strengths. This tool generates a paper consisting of 12 questions you have <strong>already attempted and scored</strong>, but hides their years and topics.</p>
+                <p><strong>Instructions:</strong>
+                    <br>1. Click the questions to read them.
+                    <br>2. Use the checkboxes to select the <strong>6 questions</strong> you think you would perform best on. 
+                    <br>3. Use the text box next to each to write your expected marks, preference rank, or notes.
+                    <br>4. Click <strong>Reveal Marks</strong> to see what you <em>actually</em> scored when you originally did them!
+                </p>
+
+                <div class="filter-group" style="margin: 20px 0; display: flex; gap: 10px;">
+                    <button class="primary" style="background-color: #9b59b6;" onclick="generatePicker()">Generate Selection</button>
+                    <button class="secondary" id="btn-reveal-picker" onclick="revealPickerMarks()" disabled>Reveal Marks</button>
+                </div>
+
+                <table class="boundaries-table" style="width: 100%; text-align: left;">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px; text-align:center;">Pick</th>
+                            <th style="width: 120px;">Question</th>
+                            <th>Your Notes / Est. Marks</th>
+                            <th style="width: 100px; text-align:center;">Actual Marks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="picker-body">
+                        <tr><td colspan="4" style="text-align:center; padding: 20px;">Click "Generate Selection" to load questions.</td></tr>
+                    </tbody>
+                </table>
             </div>
-	</div>
+        </div>
 
         <div id="info-panel" class="text-panel" style="display:none;">
             <div class="text-content">

@@ -298,39 +298,36 @@ function updateTimerDisplay() {
 window.switchMode = function(mode) {
     currentMode = mode;
     document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(`tab-${mode}`).classList.add('active');
+    document.getElementById('tab-' + mode).classList.add('active');
 
-    document.getElementById('controls-practice').style.display = 'none';
-    document.getElementById('controls-mock').style.display = 'none';
-    document.getElementById('viewer-panel').style.display = 'none';
+    // Hide everything first
     document.getElementById('tracker-panel').style.display = 'none';
+    document.getElementById('controls-mock').style.display = 'none';
     document.getElementById('info-panel').style.display = 'none';
+    document.getElementById('boundaries-panel').style.display = 'none';
     document.getElementById('resources-panel').style.display = 'none';
-    document.getElementById('boundaries-panel').style.display = 'none'; // Ensure hidden
+    document.getElementById('viewer-panel').style.display = 'none';
+    document.getElementById('picker-panel').style.display = 'none'; // NEW
 
     if (mode === 'practice') {
-        document.getElementById('controls-practice').style.display = 'flex';
         document.getElementById('viewer-panel').style.display = 'flex';
         document.getElementById('tracker-panel').style.display = 'flex';
-        document.getElementById('tracker-title').innerText = "All Questions";
+        document.getElementById('tracker-title').innerText = "Question Tracker";
         renderTable();
-    } 
-    else if (mode === 'mock') {
+    } else if (mode === 'mock') {
+        sortState = { field: null, direction: 'asc' };
         document.getElementById('controls-mock').style.display = 'flex';
         document.getElementById('viewer-panel').style.display = 'flex';
         document.getElementById('tracker-panel').style.display = 'flex';
         document.getElementById('tracker-title').innerText = "Mock Exam (12 Questions)";
         renderTable();
-    } 
-    else if (mode === 'boundaries') {
-        renderBoundaries(); // Render the table on switch
-        document.getElementById('boundaries-panel').style.display = 'flex';
-    }
-    else if (mode === 'info') {
-        document.getElementById('info-panel').style.display = 'flex';
-    } 
-    else if (mode === 'resources') {
-        document.getElementById('resources-panel').style.display = 'flex';
+    } else if (mode === 'picker') {
+        // NEW MODE
+        document.getElementById('picker-panel').style.display = 'flex';
+        document.getElementById('viewer-panel').style.display = 'flex';
+    } else {
+        // Info, Resources, Boundaries logic...
+        document.getElementById(mode + '-panel').style.display = 'block';
     }
 }
 
@@ -729,6 +726,107 @@ window.markCurrentAsDone = function() {
     syncViewerToData();
     renderTable();
     alert("Marked as complete!");
+}
+
+// --- QUESTION PICKER LOGIC ---
+let currentPickerIds = [];
+let pickerRevealed = false;
+
+window.generatePicker = function() {
+    let attemptedPure = [];
+    let attemptedMech = [];
+    let attemptedStats = [];
+
+    // Filter to questions that are done AND have a numeric mark
+    allQuestions.forEach(q => {
+        const prog = userProgress[q.id];
+        if (prog && prog.done && prog.marks !== "" && !isNaN(prog.marks)) {
+            if (q.type === 'pure') attemptedPure.push(q);
+            else if (q.type === 'mechanics') attemptedMech.push(q);
+            else if (q.type === 'stats') attemptedStats.push(q);
+        }
+    });
+
+    // Fisher-Yates Shuffle Function
+    const shuffle = (array) => {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    };
+
+    shuffle(attemptedPure);
+    shuffle(attemptedMech);
+    shuffle(attemptedStats);
+
+    // Pick 8 Pure, 2 Mech, 2 Stats
+    currentPickerIds = [];
+    for(let i=0; i<8; i++) currentPickerIds.push(attemptedPure[i] ? attemptedPure[i].id : null);
+    for(let i=0; i<2; i++) currentPickerIds.push(attemptedMech[i] ? attemptedMech[i].id : null);
+    for(let i=0; i<2; i++) currentPickerIds.push(attemptedStats[i] ? attemptedStats[i].id : null);
+
+    pickerRevealed = false;
+    document.getElementById('btn-reveal-picker').disabled = false;
+    renderPickerTable();
+}
+
+window.renderPickerTable = function() {
+    const tbody = document.getElementById('picker-body');
+    tbody.innerHTML = '';
+
+    currentPickerIds.forEach((id, index) => {
+        const tr = document.createElement('tr');
+        
+        // Determine category for fallbacks
+        let category = index < 8 ? "Pure" : (index < 10 ? "Mechanics" : "Statistics");
+
+        if (id === null) {
+            tr.innerHTML = `
+                <td></td>
+                <td colspan="3" style="color: #e74c3c; font-style: italic; padding: 10px;">
+                    Not enough attempted ${category} questions
+                </td>
+            `;
+        } else {
+            const q = allQuestions.find(item => item.id === id);
+            const actualMarks = userProgress[id].marks;
+            const marksDisplay = pickerRevealed ? `<strong>${actualMarks}</strong> / 20` : `<span style="color:#aaa;">?</span>`;
+
+            tr.innerHTML = `
+                <td style="text-align:center;">
+                    <input type="checkbox" class="picker-cb" onchange="limitPickerChecks(this)" ${pickerRevealed ? 'disabled' : ''}>
+                </td>
+                <td>
+                    <span class="clickable-name" onclick="loadFromTable('${id}')">Question ${index + 1}</span>
+                </td>
+                <td>
+                    <input type="text" placeholder="Preference / Expected Marks" style="width:90%; padding: 4px; border: 1px solid #ccc; border-radius: 4px;" ${pickerRevealed ? 'disabled' : ''}>
+                </td>
+                <td style="text-align:center; font-size: 1.1em; background-color: ${pickerRevealed ? '#e8f8f5' : 'transparent'};">
+                    ${marksDisplay}
+                </td>
+            `;
+        }
+        tbody.appendChild(tr);
+    });
+}
+
+window.limitPickerChecks = function(checkbox) {
+    const checkedBoxes = document.querySelectorAll('.picker-cb:checked');
+    if (checkedBoxes.length > 6) {
+        checkbox.checked = false;
+        alert("You can only select up to 6 questions.");
+    }
+}
+
+window.revealPickerMarks = function() {
+    if (currentPickerIds.length === 0 || currentPickerIds.every(id => id === null)) {
+        alert("Generate a selection first.");
+        return;
+    }
+    pickerRevealed = true;
+    document.getElementById('btn-reveal-picker').disabled = true;
+    renderPickerTable(); // Re-render to show marks and lock inputs
 }
 
 function loadFilters() {
