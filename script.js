@@ -518,6 +518,18 @@ function displayQuestion(q) {
     } else {
         startTimer(false);
     }
+
+    // Add this at the very end of displayQuestion(q):
+    const viewerControls = document.getElementById('viewer-controls');
+    if (viewerControls) {
+        if (currentMode === 'picker' && !pickerRevealed) {
+            // Hide if we are in picker mode and haven't revealed yet
+            viewerControls.style.display = 'none';
+        } else {
+            // Show normally for practice/mock mode, or if revealed
+            viewerControls.style.display = 'block'; // Use 'flex' if 'block' breaks your layout
+        }
+    }
 }
 
 // --- NEW SORTING & TABLE LOGIC ---
@@ -826,7 +838,14 @@ window.revealPickerMarks = function() {
     }
     pickerRevealed = true;
     document.getElementById('btn-reveal-picker').disabled = true;
-    renderPickerTable(); // Re-render to show marks and lock inputs
+    renderPickerTable(); 
+
+    // --- ADD THIS TO UNHIDE THE CONTROLS ---
+    // Only show them if a question is actually open on the screen right now
+    const questionInfo = document.getElementById('question-info').innerText;
+    if (questionInfo !== "Select a question from the list") {
+        document.getElementById('viewer-controls').style.display = 'block'; 
+    }
 }
 
 function loadFilters() {
