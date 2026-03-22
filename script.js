@@ -699,6 +699,8 @@ window.renderTable = function() {
     let countedQuestions = 0;
 
     list.forEach(q => {
+        if (!q) return; // NEW: Skip empty question slots so it doesn't crash!
+        
         const prog = userProgress[q.id];
         if (prog && prog.done && prog.marks !== "" && !isNaN(prog.marks)) {
             totalMarks += parseInt(prog.marks);
