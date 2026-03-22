@@ -472,19 +472,14 @@ window.generateRevMock = function() {
     }
 
     function shuffle(arr) { return arr.sort(() => 0.5 - Math.random()); }
-    
-    // slice() safely grabs "up to" the amount, so missing categories just add nothing
-    const selected = [...shuffle(pure).slice(0,8), ...shuffle(mech).slice(0,2), ...shuffle(stats).slice(0,2)];
-    
-    const typeRank = { 'pure': 1, 'mechanics': 2, 'stats': 3 };
-    selected.sort((a, b) => {
-        const rankA = typeRank[a.type] || 4;
-        const rankB = typeRank[b.type] || 4;
-        if (rankA !== rankB) return rankA - rankB;
-        return a.year - b.year || a.paper - b.paper || a.number - b.number;
-    });
+    shuffle(pure); shuffle(mech); shuffle(stats);
 
-    currentRevMockIds = selected.map(q => q.id);
+    // NEW LOGIC: Pad the array with nulls if there aren't enough questions
+    currentRevMockIds = [];
+    for(let i=0; i<8; i++) currentRevMockIds.push(pure[i] ? pure[i].id : null);
+    for(let i=0; i<2; i++) currentRevMockIds.push(mech[i] ? mech[i].id : null);
+    for(let i=0; i<2; i++) currentRevMockIds.push(stats[i] ? stats[i].id : null);
+
     localStorage.setItem('stepBotRevMockIds', JSON.stringify(currentRevMockIds));
     
     revMockRevealed = false;
@@ -514,7 +509,8 @@ window.viewGradeBoundaries = function() {
         if (activeIds.length === 0) { alert("Generate a mock first."); return; }
         let sums = { "S": 0, "1": 0, "2": 0, "3": 0 };
         let count = 0;
-        activeIds.forEach(id => {
+        activeIds.forEach((id, index) => {
+            if (!id) return;
             const q = allQuestions.find(item => item.id === id);
             if (q && GRADE_DATA[q.paper] && GRADE_DATA[q.paper][q.year]) {
                 const b = GRADE_DATA[q.paper][q.year];
@@ -652,17 +648,21 @@ window.renderTable = function() {
     tbody.innerHTML = '';
     
     let list = [];
+    let hideDetails = (currentMode === 'mock') || (currentMode === 'revmock' && !revMockRevealed);
 
     // --- DYNAMIC HEADER & LIST CONSTRUCTION ---
-    if (currentMode === 'mock') {
-        thead.innerHTML = `<tr><th class="col-check">✓</th><th class="col-id">#</th><th class="col-date">Date</th><th class="col-marks">Marks</th><th class="col-notes">Notes</th></tr>`;
-        if (currentMockIds.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No mock generated.</td></tr>'; return; }
-        list = currentMockIds.map(id => allQuestions.find(q => q.id === id)).filter(Boolean);
-    } else if (currentMode === 'revmock') {
-        thead.innerHTML = `<tr><th class="col-check">✓</th><th class="col-id">#</th><th class="col-date">Date</th><th class="col-marks">Marks</th><th class="col-notes">Notes</th></tr>`;
-        if (currentRevMockIds.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No revision mock generated.</td></tr>'; return; }
-        list = currentRevMockIds.map(id => allQuestions.find(q => q.id === id)).filter(Boolean);
+    if (currentMode === 'mock' || currentMode === 'revmock') {
+        let topicHeader = hideDetails ? '' : '<th class="col-topic">Topic</th>';
+        thead.innerHTML = `<tr><th class="col-check">✓</th><th class="col-id">#</th>${topicHeader}<th class="col-date">Date</th><th class="col-marks">Marks</th><th class="col-notes">Notes</th></tr>`;
         
+        let activeIds = currentMode === 'revmock' ? currentRevMockIds : currentMockIds;
+        if (activeIds.length === 0) { 
+            tbody.innerHTML = `<tr><td colspan="${hideDetails ? 5 : 6}" style="text-align:center; padding:20px;">No mock generated.</td></tr>`; 
+            return; 
+        }
+        
+        // Remove .filter(Boolean) so nulls are kept in the list
+        list = activeIds.map(id => id ? allQuestions.find(q => q.id === id) : null);
     } else {
         thead.innerHTML = `
             <tr>
@@ -760,12 +760,26 @@ window.renderTable = function() {
 
     // --- Render the Rows ---
     list.forEach((q, index) => {
+        // NEW LOGIC: Render a warning row if the question slot is empty
+        if (!q) {
+            const tr = document.createElement('tr');
+            let category = index < 8 ? "Pure" : (index < 10 ? "Mechanics" : "Statistics");
+            let colspan = hideDetails ? 4 : 5; 
+            tr.innerHTML = `
+                <td></td>
+                <td colspan="${colspan}" style="color: #e74c3c; font-style: italic; padding: 10px;">
+                    Not enough valid ${category} questions
+                </td>
+            `;
+            tbody.appendChild(tr);
+            return; // Skip the rest of the loop for this row
+        }
+
         const data = userProgress[q.id] || { done: false, date: '', marks: '', notes: '' };
         const tr = document.createElement('tr');
         if (data.done) tr.style.backgroundColor = "#e8f8f5";
         
         let nameColumn, topicColumn;
-        let hideDetails = (currentMode === 'mock') || (currentMode === 'revmock' && !revMockRevealed);
 
         if (hideDetails) {
             nameColumn = `<td class="col-id"><span class="clickable-name" onclick="loadFromTable('${q.id}')">${index + 1}</span></td>`;
@@ -1007,7 +1021,8 @@ function loadFilters() {
         
         let sourcesHtml = '<h3>Question Sources</h3><ul style="list-style:none; padding:0; font-family: \'Times New Roman\', serif; font-size: 1.1em;">';
 
-        activeIds.forEach((id, index) => {
+        activeIds.forEach(id => {
+            if (!id) return;
             const q = allQuestions.find(item => item.id === id);
             
             if (q && GRADE_DATA[q.paper] && GRADE_DATA[q.paper][q.year]) {
