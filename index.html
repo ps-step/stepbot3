@@ -14,7 +14,8 @@
             <div class="logo">StepBot3</div>
             <div class="mode-tabs">
                 <button id="tab-practice" class="mode-btn active" onclick="switchMode('practice')">Practice Mode</button>
-                <button id="tab-mock" class="mode-btn" onclick="switchMode('mock')">Mock Exam</button>
+                <button id="tab-mock" class="mode-btn" onclick="switchMode('mock')">Mock (unattempted)</button>
+                <button id="tab-revmock" class="mode-btn" onclick="switchMode('revmock')">Mock (old q's)</button>
                 <button id="tab-boundaries" class="mode-btn" onclick="switchMode('boundaries')">Grade Boundaries</button>
 
                 <button id="tab-picker" class="mode-btn" onclick="switchMode('picker')">Question Picker</button>
@@ -37,7 +38,7 @@
                 
                 <select id="sel-topic" onchange="renderTable()" style="max-width: 150px;">
                     <option value="all">All Topics</option>
-                    </select>
+                </select>
 
                 <button class="primary" onclick="generateRandom()">Random Question</button>
             </div>
@@ -76,6 +77,24 @@
                 
                 <button class="primary" style="background-color: #e67e22;" onclick="generateMock()">Generate Paper</button>
                 <button class="secondary" onclick="viewGradeBoundaries()">Est. Boundaries</button>
+                <button class="secondary" onclick="printMock()">Print / PDF</button>
+            </div>
+        </div>
+
+        <div id="controls-revmock" class="controls" style="display:none;">
+            <div class="filter-group">
+                <span style="font-weight:bold; color:#ecf0f1; margin-right:10px;">New Mock:</span>
+                
+                <label>Older than (days):</label>
+                <input type="number" id="revmock-days" value="30" style="width: 60px;">
+                
+                <span class="separator">|</span>
+                
+                <label><input type="checkbox" id="revmock-p2" checked> P2</label>
+                <label><input type="checkbox" id="revmock-p3" checked> P3</label>
+                
+                <button class="primary" style="background-color: #8e44ad;" onclick="generateRevMock()">Generate</button>
+                <button class="secondary" id="btn-finish-revmock" onclick="finishRevMock()" disabled>Finish Mock</button>
                 <button class="secondary" onclick="printMock()">Print / PDF</button>
             </div>
         </div>
@@ -131,18 +150,18 @@
                         </tr>
                     </thead>
                     <tbody id="tracker-body">
-                        </tbody>
+                    </tbody>
                 </table>
             </div>
         </div>
 
         <div id="boundaries-panel" class="text-panel" style="display:none;">
-                <div class="text-content">
-                    <h2>Historical Grade Boundaries</h2>
-            <p>Boundaries for Grade S, 1, 2, and 3 for past years.</p>
-            <div id="boundaries-table-container">
+            <div class="text-content">
+                <h2>Historical Grade Boundaries</h2>
+                <p>Boundaries for Grade S, 1, 2, and 3 for past years.</p>
+                <div id="boundaries-table-container">
                 </div>
-                </div>
+            </div>
         </div>
 
         <div id="picker-panel" style="display:none;">
@@ -175,10 +194,10 @@
                     </tbody>
                 </table>
         
-            <div id="picker-results" style="display:none; margin-top: 20px; padding: 15px; background-color: #e8f8f5; border: 1px solid #d4efdf; border-radius: 5px; font-size: 1.1em; line-height: 1.5;">
+                <div id="picker-results" style="display:none; margin-top: 20px; padding: 15px; background-color: #e8f8f5; border: 1px solid #d4efdf; border-radius: 5px; font-size: 1.1em; line-height: 1.5;">
+                </div>
             </div>
-        
-        </div> </div>
+        </div>
 
         <div id="info-panel" class="text-panel" style="display:none;">
             <div class="text-content">
@@ -190,6 +209,7 @@
                     <li><strong>Question Database:</strong> STEP 2 and 3 from 2008 to 2024. More questions will be added if I can be bothered, but this is unlikely.</li>
                     <li><strong>Practice Mode:</strong> Filter questions by paper, type, and topic. You can track your progress in the sidebar, which filters based on selected topics.</li>
                     <li><strong>Mock Mode:</strong> Generate timed mock papers consisting of 12 questions you have not done. Grade boundaries interpolated from years.</li>
+                    <li><strong>Revision Mock:</strong> Re-test yourself on questions you've already done! Hidden marks until you click finish.</li>
                     <li><strong>Progress Tracking:</strong> Marks questions as complete, logs your scores, and saves your notes automatically to your browser.</li>
                     <li><strong>Mark Schemes:</strong> View PDF mark schemes within the app.</li>
                 </ul>
@@ -202,6 +222,17 @@
             <div class="text-content">
                 <h2>Resources & Tips</h2>
                 <p>A collection of useful resources for A Level, STEP, TMUA, MAT, and Interviews.</p>
+
+                <div class="resources-icons" style="display: flex; gap: 20px; margin: 30px 0;">
+                    <a href="mock1.pdf" target="_blank" class="resource-icon-btn">
+                        <div class="icon">📄</div>
+                        <div>Mock Paper 1</div>
+                    </a>
+                    <a href="stats_formulae.pdf" target="_blank" class="resource-icon-btn">
+                        <div class="icon">📊</div>
+                        <div>Stats Formulae</div>
+                    </a>
+                </div>
 
                 <h3>Edexcel A Level Maths</h3>
                 <ul>

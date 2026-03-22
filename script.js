@@ -1,5 +1,3 @@
-/* script.js */
-
 // --- FIREBASE IMPORTS & SETUP ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -142,13 +140,17 @@ let currentMockIds = JSON.parse(localStorage.getItem('stepBotMockIds')) || [];
 let currentQuestionId = null;
 let timerInterval = null;
 let secondsElapsed = 0;
-let sortState = { field: null, direction: 'asc' }; // Track current sort
+let sortState = { field: null, direction: 'asc' }; 
+let revMockRevealed = false;
 
 // Initialize
 window.onload = function() {
     generateQuestionList();
     loadFilters(); 
     renderTable(); 
+    
+    // ADD THIS LINE:
+    renderBoundaries();
     
     // Auth Listener
     onAuthStateChanged(auth, (user) => {
@@ -236,7 +238,7 @@ async function saveToCloud() {
 
 function getQuestionType(year, number) {
     if (number <= 8) return 'pure';
-    if (year <= 2018) { // Updated to 2018 based on specification change
+    if (year <= 2018) { 
         if (number >= 9 && number <= 11) return 'mechanics';
         if (number >= 12 && number <= 13) return 'stats';
     } else {
@@ -251,7 +253,7 @@ function generateQuestionList() {
     const papers = [2, 3];
     for (let year = 2008; year <= 2024; year++) {
         papers.forEach(paper => {
-            let maxQ = (year <= 2018) ? 13 : 12; // Updated to 2018
+            let maxQ = (year <= 2018) ? 13 : 12; 
             for (let num = 1; num <= maxQ; num++) {
                 const broadType = getQuestionType(year, num);
                 const id = `${year}.${paper}.${num}`; 
@@ -270,12 +272,10 @@ function generateQuestionList() {
 function startTimer(keepTime = false) {
     if (timerInterval) clearInterval(timerInterval);
     
-    // Only reset seconds if we are NOT keeping the time
     if (!keepTime) {
         secondsElapsed = 0;
     }
     
-    // Immediate update
     updateTimerDisplay();
     
     timerInterval = setInterval(() => {
@@ -303,11 +303,12 @@ window.switchMode = function(mode) {
     // Hide everything first
     document.getElementById('tracker-panel').style.display = 'none';
     document.getElementById('controls-mock').style.display = 'none';
+    document.getElementById('controls-revmock').style.display = 'none';
     document.getElementById('info-panel').style.display = 'none';
     document.getElementById('boundaries-panel').style.display = 'none';
     document.getElementById('resources-panel').style.display = 'none';
     document.getElementById('viewer-panel').style.display = 'none';
-    document.getElementById('picker-panel').style.display = 'none'; // NEW
+    document.getElementById('picker-panel').style.display = 'none'; 
 
     if (mode === 'practice') {
         document.getElementById('viewer-panel').style.display = 'flex';
@@ -321,29 +322,62 @@ window.switchMode = function(mode) {
         document.getElementById('tracker-panel').style.display = 'flex';
         document.getElementById('tracker-title').innerText = "Mock Exam (12 Questions)";
         renderTable();
+    } else if (mode === 'revmock') {
+        sortState = { field: null, direction: 'asc' };
+        document.getElementById('controls-revmock').style.display = 'flex';
+        document.getElementById('viewer-panel').style.display = 'flex';
+        document.getElementById('tracker-panel').style.display = 'flex';
+        document.getElementById('tracker-title').innerText = "Mock Exam (12 Old Questions)";
+        renderTable();
     } else if (mode === 'picker') {
-        // NEW MODE
         document.getElementById('picker-panel').style.display = 'flex';
         document.getElementById('viewer-panel').style.display = 'flex';
     } else {
-        // Info, Resources, Boundaries logic...
         document.getElementById(mode + '-panel').style.display = 'block';
     }
 }
 
 window.renderBoundaries = function() {
     const container = document.getElementById('boundaries-table-container');
-    let html = '<table class="boundaries-table"><thead><tr><th style="width:80px">Year</th><th colspan="4" style="text-align:center">Paper 2 (S / 1 / 2 / 3)</th><th colspan="4" style="text-align:center">Paper 3 (S / 1 / 2 / 3)</th></tr></thead><tbody>';
+    let html = `<table class="boundaries-table">
+        <thead>
+            <tr>
+                <th style="width:80px">Year</th>
+                <th>Paper</th>
+                <th>S</th><th>1</th><th>2</th><th>3</th>
+                <th>Links</th>
+            </tr>
+        </thead>
+        <tbody>`;
     
     for (let y = 2025; y >= 2008; y--) {
-        const p2 = GRADE_DATA[2][y] || {S:'-',1:'-',2:'-',3:'-'};
-        const p3 = GRADE_DATA[3][y] || {S:'-',1:'-',2:'-',3:'-'};
-        
-        html += `<tr>
-            <td style="font-weight:bold">${y}</td>
-            <td>${p2.S}</td><td>${p2[1]}</td><td>${p2[2]}</td><td>${p2[3]}</td>
-            <td>${p3.S}</td><td>${p3[1]}</td><td>${p3[2]}</td><td>${p3[3]}</td>
-        </tr>`;
+        [2, 3].forEach(paperNum => {
+            const grades = GRADE_DATA[paperNum][y] || {S:'-',1:'-',2:'-',3:'-'};
+            const paperLabel = paperNum === 2 ? "II" : "III";
+            const qpLink = `past_papers/${y}.${paperNum}.pdf`; 
+            const msLink = `mark_schemes/${y}.${paperNum}.pdf`;
+            
+            // NEW LOGIC: Hide links if the year is 2025
+            let linksHtml = '';
+            if (y === 2025) {
+                linksHtml = '<span style="color:#95a5a6; font-style:italic;">havent added it yet, go ocr website</span>';
+            } else {
+                linksHtml = `
+                    <a href="${qpLink}" target="_blank" style="margin-right:15px; color:#2980b9;">📝 Paper</a>
+                    <a href="${msLink}" target="_blank" style="color:#27ae60;">✅ Mark Scheme</a>
+                `;
+            }
+            
+            html += `<tr>
+                <td style="font-weight:bold">${y}</td>
+                <td style="font-weight:bold; color: #34495e;">STEP ${paperLabel}</td>
+                <td>${grades.S}</td>
+                <td>${grades[1]}</td>
+                <td>${grades[2]}</td>
+                <td>${grades[3]}</td>
+                <td>${linksHtml}</td>
+            </tr>`;
+        });
     }
     html += '</tbody></table>';
     container.innerHTML = html;
@@ -379,17 +413,12 @@ window.generateMock = function() {
     function shuffle(arr) { return arr.sort(() => 0.5 - Math.random()); }
     const selected = [...shuffle(pure).slice(0,8), ...shuffle(mech).slice(0,2), ...shuffle(stats).slice(0,2)];
     
-    // --- UPDATED SORTING: Pure (1) -> Mech (2) -> Stats (3) ---
     const typeRank = { 'pure': 1, 'mechanics': 2, 'stats': 3 };
     
     selected.sort((a, b) => {
         const rankA = typeRank[a.type] || 4;
         const rankB = typeRank[b.type] || 4;
-        
-        // Primary sort: Type
         if (rankA !== rankB) return rankA - rankB;
-        
-        // Secondary sort: Year -> Paper -> Number
         return a.year - b.year || a.paper - b.paper || a.number - b.number;
     });
 
@@ -397,10 +426,73 @@ window.generateMock = function() {
     localStorage.setItem('stepBotMockIds', JSON.stringify(currentMockIds));
     renderTable();
     
-    // Start/Reset the Exam Timer immediately
     startTimer(false); 
-    
     alert("Mock generated! Timer started.");
+}
+
+window.generateRevMock = function() {
+    const days = parseInt(document.getElementById('revmock-days').value) || 0;
+    const useP2 = document.getElementById('revmock-p2').checked;
+    const useP3 = document.getElementById('revmock-p3').checked;
+
+    if (!useP2 && !useP3) { alert("Select at least one paper."); return; }
+
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    let pool = allQuestions.filter(q => {
+        if (q.paper === 2 && !useP2) return false;
+        if (q.paper === 3 && !useP3) return false;
+        
+        const progress = userProgress[q.id];
+        if (!progress || !progress.done || !progress.date) return false;
+        
+        const attemptDate = new Date(progress.date);
+        return attemptDate < cutoffDate;
+    });
+
+    const pure = pool.filter(q => q.type === 'pure');
+    const mech = pool.filter(q => q.type === 'mechanics');
+    const stats = pool.filter(q => q.type === 'stats');
+
+    if (pure.length < 8 || mech.length < 2 || stats.length < 2) {
+        alert(`Not enough qualifying older questions available! (Found: ${pure.length} pure, ${mech.length} mech, ${stats.length} stats)`);
+        return;
+    }
+
+    function shuffle(arr) { return arr.sort(() => 0.5 - Math.random()); }
+    const selected = [...shuffle(pure).slice(0,8), ...shuffle(mech).slice(0,2), ...shuffle(stats).slice(0,2)];
+    
+    const typeRank = { 'pure': 1, 'mechanics': 2, 'stats': 3 };
+    selected.sort((a, b) => {
+        const rankA = typeRank[a.type] || 4;
+        const rankB = typeRank[b.type] || 4;
+        if (rankA !== rankB) return rankA - rankB;
+        return a.year - b.year || a.paper - b.paper || a.number - b.number;
+    });
+
+    currentMockIds = selected.map(q => q.id);
+    localStorage.setItem('stepBotMockIds', JSON.stringify(currentMockIds));
+    
+    revMockRevealed = false;
+    document.getElementById('btn-finish-revmock').disabled = false;
+    
+    renderTable();
+    startTimer(false); 
+    alert("Revision Mock generated! Original marks and notes are hidden until you click Finish Mock.");
+}
+
+window.finishRevMock = function() {
+    revMockRevealed = true;
+    document.getElementById('btn-finish-revmock').disabled = true;
+    
+    renderTable();
+    
+    const questionInfo = document.getElementById('question-info').innerText;
+    if (questionInfo !== "Select a question from the list") {
+        const controls = document.getElementById('viewer-controls');
+        if (controls) controls.style.display = 'block'; 
+    }
 }
 
 window.viewGradeBoundaries = function() {
@@ -486,9 +578,8 @@ function displayQuestion(q) {
     currentQuestionId = q.id;
     const label = q.paper === 2 ? "II" : "III";
 
-    // --- ADD THIS NEW BLOCK ---
     const msgBox = document.getElementById('custom-message-box');
-    const targetQuestionId = "2024.3.7"; // e.g., "2023-2-5" or whatever your ID format is
+    const targetQuestionId = "2024.3.7"; 
 
     if (q.id === targetQuestionId) {
         msgBox.innerText = "Best STEP question of all time btw";
@@ -497,37 +588,29 @@ function displayQuestion(q) {
         msgBox.style.display = "none";
     }
 
-
-    if (currentMode === 'mock' || currentMode === 'picker') {
-        // Hides the topic in Mock mode
+    if (currentMode === 'mock' || currentMode === 'picker' || currentMode === 'revmock') {
         document.getElementById('question-info').innerText = `${q.year} | Paper ${label} | Q${q.number}`;
     } else {
-        // Keeps the topic in Practice mode
         document.getElementById('question-info').innerText = `${q.year} | Paper ${label} | Q${q.number} | ${q.topic}`;
     }
     document.getElementById('question-img').src = `questions/${q.filename}`;
-    document.getElementById('viewer-controls').style.display = 'block';
     
     const data = userProgress[q.id] || { marks: '', notes: '' };
     document.getElementById('viewer-marks').value = data.marks;
     document.getElementById('viewer-notes').value = data.notes;
     
-    // In Mock mode, keep the timer running (don't reset). In Practice, reset per question.
-    if (currentMode === 'mock') {
+    if (currentMode === 'mock' || currentMode === 'revmock') {
         startTimer(true); 
     } else {
         startTimer(false);
     }
 
-    // Add this at the very end of displayQuestion(q):
     const viewerControls = document.getElementById('viewer-controls');
     if (viewerControls) {
-        if (currentMode === 'picker' && !pickerRevealed) {
-            // Hide if we are in picker mode and haven't revealed yet
+        if ((currentMode === 'picker' && !pickerRevealed) || (currentMode === 'revmock' && !revMockRevealed)) {
             viewerControls.style.display = 'none';
         } else {
-            // Show normally for practice/mock mode, or if revealed
-            viewerControls.style.display = 'block'; // Use 'flex' if 'block' breaks your layout
+            viewerControls.style.display = 'block'; 
         }
     }
 }
@@ -535,11 +618,9 @@ function displayQuestion(q) {
 // --- NEW SORTING & TABLE LOGIC ---
 
 window.toggleSort = function(column) {
-    // If clicking same column, toggle direction
     if (sortState.field === column) {
         sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
     } else {
-        // New column, set to ascending
         sortState.field = column;
         sortState.direction = 'asc';
     }
@@ -555,8 +636,7 @@ window.renderTable = function() {
     let list = [];
 
     // --- DYNAMIC HEADER & LIST CONSTRUCTION ---
-    if (currentMode === 'mock') {
-        // Mock Mode: Removed 'sortable' class and onclick events so it stays locked
+    if (currentMode === 'mock' || currentMode === 'revmock') {
         thead.innerHTML = `
             <tr>
                 <th class="col-check">✓</th>
@@ -571,11 +651,9 @@ window.renderTable = function() {
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No mock generated.</td></tr>';
             return;
         }
-        // Force the list to strictly follow the exact order generated by the mock algorithm
         list = currentMockIds.map(id => allQuestions.find(q => q.id === id)).filter(Boolean);
         
     } else {
-        // Practice Mode: Standard View with Sorting Enabled
         thead.innerHTML = `
             <tr>
                 <th class="col-check sortable" onclick="toggleSort('done')">✓</th>
@@ -629,7 +707,6 @@ window.renderTable = function() {
     // --- Apply Sorting (ONLY for Practice Mode) ---
     if (currentMode === 'practice') {
         if (sortState.field) {
-            // Custom Sort
             list.sort((a, b) => {
                 let valA, valB;
                 const progA = userProgress[a.id] || {};
@@ -667,7 +744,6 @@ window.renderTable = function() {
                 return 0;
             });
         } else {
-            // Practice Default: Year Descending
             list.sort((a,b) => b.year - a.year || a.paper - b.paper || a.number - b.number);
         }
     }
@@ -680,7 +756,7 @@ window.renderTable = function() {
         
         let nameColumn, topicColumn;
 
-        if (currentMode === 'mock') {
+        if (currentMode === 'mock' || currentMode === 'revmock') {
             nameColumn = `<td class="col-id"><span class="clickable-name" onclick="loadFromTable('${q.id}')">${index + 1}</span></td>`;
             topicColumn = ''; 
         } else {
@@ -689,13 +765,21 @@ window.renderTable = function() {
             topicColumn = `<td class="col-topic">${q.topic}</td>`;
         }
         
+        let marksField = `<input type="number" value="${data.marks}" onchange="updateProgress('${q.id}', 'marks', this.value)">`;
+        let notesField = `<textarea class="note-input" placeholder="Notes..." onchange="updateProgress('${q.id}', 'notes', this.value)">${data.notes}</textarea>`;
+        
+        if (currentMode === 'revmock' && !revMockRevealed) {
+            marksField = `<span style="color:#aaa; font-style:italic;">Hidden</span>`;
+            notesField = `<span style="color:#aaa; font-style:italic;">Hidden</span>`;
+        }
+        
         tr.innerHTML = `
             <td class="col-check"><input type="checkbox" ${data.done ? 'checked' : ''} onchange="updateProgress('${q.id}', 'done', this.checked)"></td>
             ${nameColumn}
             ${topicColumn}
             <td class="col-date"><input type="date" value="${data.date}" onchange="updateProgress('${q.id}', 'date', this.value)"></td>
-            <td class="col-marks"><input type="number" value="${data.marks}" onchange="updateProgress('${q.id}', 'marks', this.value)"></td>
-            <td class="col-notes"><div class="note-cell"><textarea class="note-input" placeholder="Notes..." onchange="updateProgress('${q.id}', 'notes', this.value)">${data.notes}</textarea></div></td>
+            <td class="col-marks">${marksField}</td>
+            <td class="col-notes"><div class="note-cell">${notesField}</div></td>
         `;
         tbody.appendChild(tr);
     });
@@ -711,7 +795,6 @@ window.updateProgress = function(id, field, value) {
         if (field === 'marks') document.getElementById('viewer-marks').value = value;
         if (field === 'notes') document.getElementById('viewer-notes').value = value;
     }
-    // Re-render table on any change to update averages/sorts instantly
     renderTable();
 }
 
@@ -749,7 +832,6 @@ window.generatePicker = function() {
     let attemptedMech = [];
     let attemptedStats = [];
 
-    // Filter to questions that are done AND have a numeric mark
     allQuestions.forEach(q => {
         const prog = userProgress[q.id];
         if (prog && prog.done && prog.marks !== "" && !isNaN(prog.marks)) {
@@ -778,7 +860,6 @@ window.generatePicker = function() {
     pickerRevealed = false;
     document.getElementById('btn-reveal-picker').disabled = false;
     
-    // Hide the results box when generating a new paper
     const resultsDiv = document.getElementById('picker-results');
     if (resultsDiv) resultsDiv.style.display = 'none';
     
@@ -801,7 +882,6 @@ window.renderPickerTable = function() {
                 </td>
             `;
         } else {
-            // We assign the 'id' to the checkbox value so we can reference it later
             tr.innerHTML = `
                 <td style="text-align:center;">
                     <input type="checkbox" class="picker-cb" value="${id}" onchange="limitPickerChecks(this)">
@@ -841,37 +921,30 @@ window.revealPickerMarks = function() {
     let userSum = 0;
     let allAvailableMarks = [];
 
-    // 1. Update the existing table rows (this preserves checkboxes & text inputs)
     const checkboxes = document.querySelectorAll('.picker-cb');
     checkboxes.forEach(cb => {
         const id = cb.value;
         const marks = parseInt(userProgress[id].marks) || 0;
         
-        // Calculate user score based on checked boxes
         if (cb.checked) {
             userSum += marks;
         }
         allAvailableMarks.push(marks);
 
-        // Inject the marks into the specific table cell without rebuilding the row
         const cell = document.getElementById(`picker-marks-${id}`);
         if (cell) {
             cell.innerHTML = `<strong>${marks}</strong> / 20`;
             cell.style.backgroundColor = '#e8f8f5';
         }
         
-        // Lock the inputs
         cb.disabled = true;
     });
 
-    // Lock the text fields
     document.querySelectorAll('.picker-input').forEach(input => input.disabled = true);
 
-    // 2. Calculate optimal score (top 6 available marks)
-    allAvailableMarks.sort((a, b) => b - a); // Sort descending
+    allAvailableMarks.sort((a, b) => b - a); 
     let optimalSum = allAvailableMarks.slice(0, 6).reduce((sum, val) => sum + val, 0);
 
-    // 3. Display the calculation results
     const resultsDiv = document.getElementById('picker-results');
     if (resultsDiv) {
         resultsDiv.innerHTML = `
@@ -881,7 +954,6 @@ window.revealPickerMarks = function() {
         resultsDiv.style.display = 'block';
     }
 
-    // Unhide bottom controls if a question is currently open
     const questionInfo = document.getElementById('question-info').innerText;
     if (questionInfo !== "Select a question from the list") {
         const controls = document.getElementById('viewer-controls');
@@ -918,24 +990,20 @@ function loadFilters() {
     window.printMock = function() {
         if (currentMockIds.length === 0) { alert("Generate a mock first."); return; }
 
-        // 1. Calculate Grade Boundaries & Build Sources List
         let sums = { "S": 0, "1": 0, "2": 0, "3": 0 };
         let count = 0;
         
-        // Start the sources list (Keep Back Page as Times New Roman)
         let sourcesHtml = '<h3>Question Sources</h3><ul style="list-style:none; padding:0; font-family: \'Times New Roman\', serif; font-size: 1.1em;">';
 
         currentMockIds.forEach((id, index) => {
             const q = allQuestions.find(item => item.id === id);
             
-            // Accumulate Grade Data
             if (q && GRADE_DATA[q.paper] && GRADE_DATA[q.paper][q.year]) {
                 const b = GRADE_DATA[q.paper][q.year];
                 sums["S"]+=b["S"]; sums["1"]+=b["1"]; sums["2"]+=b["2"]; sums["3"]+=b["3"];
                 count++;
             }
 
-            // Add to Sources List
             const label = q.paper === 2 ? "II" : "III";
             sourcesHtml += `<li style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:4px;">
                 <strong>Q${index+1}:</strong> ${q.year} STEP ${label} Q${q.number} <span style="color:#666">(${q.topic})</span>
@@ -943,7 +1011,6 @@ function loadFilters() {
         });
         sourcesHtml += '</ul>';
 
-        // Build Boundaries Table
         let boundariesHtml = '<h3>Estimated Grade Boundaries</h3><p><em>(Based on average of constituent questions)</em></p>';
         if (count > 0) {
             boundariesHtml += `
@@ -958,7 +1025,6 @@ function loadFilters() {
             boundariesHtml += "<p>No historical data available for these questions.</p>";
         }
 
-        // 2. Construct the HTML for the Print Window
         let content = `
             <!DOCTYPE html>
             <html>
@@ -972,14 +1038,12 @@ function loadFilters() {
                     
                     @media print {
                         body { margin: 0 !important; padding: 0 !important; }
-                        /* Force background colors (needed for the white mask to work) */
                         * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                     }
 
                     body { 
                         margin: 0; 
                         padding: 0; 
-                        /* Default font for document (covers, back page) */
                         font-family: 'Times New Roman', Times, serif; 
                         background: white;
                     }
@@ -1016,7 +1080,6 @@ function loadFilters() {
                         display: block;
                     }
 
-                    /* THE MASK BAR */
                     .mask-bar {
                         position: absolute;
                         top: 0;
@@ -1027,17 +1090,15 @@ function loadFilters() {
                         z-index: 5; 
                     }
 
-                    /* THE QUESTION NUMBER */
                     .q-number {
                         position: absolute;
                         top: 6%; 
                         left: 0;
-                        width: 12.8%; /* Centered within the mask bar */
+                        width: 12.8%; 
                         text-align: center;
                         
-                        /* FONT CHANGES HERE */
                         font-family: Arial, Helvetica, sans-serif; 
-                        font-size: 2.5rem; /* Reduced size */
+                        font-size: 2.5rem; 
                         
                         font-weight: bold;
                         color: #000;
@@ -1045,7 +1106,6 @@ function loadFilters() {
                         z-index: 10;
                     }
 
-                    /* Info Page Styling */
                     .info-page {
                         justify-content: flex-start;
                         align-items: flex-start;
@@ -1074,7 +1134,6 @@ function loadFilters() {
                 </div>
         `;
 
-        // Add Question Pages with Mask and Number
         currentMockIds.forEach((id, index) => {
             const q = allQuestions.find(item => item.id === id);
             content += `
@@ -1086,7 +1145,6 @@ function loadFilters() {
             `;
         });
 
-        // Add Back Page
         content += `
                 <div class="page info-page">
                     ${sourcesHtml}
@@ -1094,7 +1152,6 @@ function loadFilters() {
                     ${boundariesHtml}
                 </div>
                 <script>
-                    // Auto-trigger print when loaded
                     window.onload = function() {
                         setTimeout(() => { 
                             window.print(); 
@@ -1105,7 +1162,6 @@ function loadFilters() {
             </html>
         `;
 
-        // 3. Open Window
         const win = window.open('', '_blank');
         if (!win) { alert("Please allow popups to print."); return; }
         
