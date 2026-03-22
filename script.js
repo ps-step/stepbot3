@@ -137,6 +137,7 @@ let allQuestions = [];
 let userProgress = JSON.parse(localStorage.getItem('stepTrackerData')) || {};
 let currentMode = 'practice'; 
 let currentMockIds = JSON.parse(localStorage.getItem('stepBotMockIds')) || []; 
+let currentRevMockIds = JSON.parse(localStorage.getItem('stepBotRevMockIds')) || []; // NEW LINE
 let currentQuestionId = null;
 let timerInterval = null;
 let secondsElapsed = 0;
@@ -431,24 +432,28 @@ window.generateMock = function() {
 }
 
 window.generateRevMock = function() {
-    const days = parseInt(document.getElementById('revmock-days').value) || 0;
+    const daysInput = parseInt(document.getElementById('revmock-days').value);
+    const days = isNaN(daysInput) ? 0 : daysInput;
     const useP2 = document.getElementById('revmock-p2').checked;
     const useP3 = document.getElementById('revmock-p3').checked;
 
     if (!useP2 && !useP3) { alert("Select at least one paper."); return; }
 
+    // Set cutoff to the very end of the day, 'days' ago
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
+    cutoffDate.setHours(23, 59, 59, 999); 
 
     let pool = allQuestions.filter(q => {
         if (q.paper === 2 && !useP2) return false;
         if (q.paper === 3 && !useP3) return false;
         
         const progress = userProgress[q.id];
-        if (!progress || !progress.done || !progress.date) return false;
+        if (!progress || !progress.done) return false;
         
-        const attemptDate = new Date(progress.date);
-        return attemptDate < cutoffDate;
+        // If it's done but has no date (legacy data), assume it's very old (Year 2000)
+        const attemptDate = progress.date ? new Date(progress.date) : new Date('2000-01-01');
+        return attemptDate <= cutoffDate;
     });
 
     const pure = pool.filter(q => q.type === 'pure');
@@ -456,7 +461,7 @@ window.generateRevMock = function() {
     const stats = pool.filter(q => q.type === 'stats');
 
     if (pure.length < 8 || mech.length < 2 || stats.length < 2) {
-        alert(`Not enough qualifying older questions available! (Found: ${pure.length} pure, ${mech.length} mech, ${stats.length} stats)`);
+        alert(`Not enough qualifying older questions available!\nFound: ${pure.length} Pure (need 8), ${mech.length} Mech (need 2), ${stats.length} Stats (need 2).`);
         return;
     }
 
@@ -471,8 +476,9 @@ window.generateRevMock = function() {
         return a.year - b.year || a.paper - b.paper || a.number - b.number;
     });
 
-    currentMockIds = selected.map(q => q.id);
-    localStorage.setItem('stepBotMockIds', JSON.stringify(currentMockIds));
+    // Use the dedicated RevMock variable
+    currentRevMockIds = selected.map(q => q.id);
+    localStorage.setItem('stepBotRevMockIds', JSON.stringify(currentRevMockIds));
     
     revMockRevealed = false;
     document.getElementById('btn-finish-revmock').disabled = false;
@@ -486,21 +492,23 @@ window.finishRevMock = function() {
     revMockRevealed = true;
     document.getElementById('btn-finish-revmock').disabled = true;
     
+    // Refresh table to unhide columns
     renderTable();
     
-    const questionInfo = document.getElementById('question-info').innerText;
-    if (questionInfo !== "Select a question from the list") {
-        const controls = document.getElementById('viewer-controls');
-        if (controls) controls.style.display = 'block'; 
+    // Refresh the currently open question to unhide its title and controls
+    if (currentQuestionId) {
+        const q = allQuestions.find(item => item.id === currentQuestionId);
+        if (q) displayQuestion(q);
     }
 }
 
 window.viewGradeBoundaries = function() {
     try {
-        if (currentMockIds.length === 0) { alert("Generate a mock first."); return; }
+        let activeIds = currentMode === 'revmock' ? currentRevMockIds : currentMockIds;
+        if (activeIds.length === 0) { alert("Generate a mock first."); return; }
         let sums = { "S": 0, "1": 0, "2": 0, "3": 0 };
         let count = 0;
-        currentMockIds.forEach(id => {
+        activeIds.forEach(id => {
             const q = allQuestions.find(item => item.id === id);
             if (q && GRADE_DATA[q.paper] && GRADE_DATA[q.paper][q.year]) {
                 const b = GRADE_DATA[q.paper][q.year];
@@ -588,7 +596,11 @@ function displayQuestion(q) {
         msgBox.style.display = "none";
     }
 
-    if (currentMode === 'mock' || currentMode === 'picker' || currentMode === 'revmock') {
+    let hideHeaderTopic = (currentMode === 'mock') || 
+                          (currentMode === 'picker' && !pickerRevealed) || 
+                          (currentMode === 'revmock' && !revMockRevealed);
+
+    if (hideHeaderTopic) {
         document.getElementById('question-info').innerText = `${q.year} | Paper ${label} | Q${q.number}`;
     } else {
         document.getElementById('question-info').innerText = `${q.year} | Paper ${label} | Q${q.number} | ${q.topic}`;
@@ -636,22 +648,14 @@ window.renderTable = function() {
     let list = [];
 
     // --- DYNAMIC HEADER & LIST CONSTRUCTION ---
-    if (currentMode === 'mock' || currentMode === 'revmock') {
-        thead.innerHTML = `
-            <tr>
-                <th class="col-check">✓</th>
-                <th class="col-id">#</th> 
-                <th class="col-date">Date</th>
-                <th class="col-marks">Marks</th>
-                <th class="col-notes">Notes</th>
-            </tr>
-        `;
-
-        if (currentMockIds.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No mock generated.</td></tr>';
-            return;
-        }
+    if (currentMode === 'mock') {
+        thead.innerHTML = `<tr><th class="col-check">✓</th><th class="col-id">#</th><th class="col-date">Date</th><th class="col-marks">Marks</th><th class="col-notes">Notes</th></tr>`;
+        if (currentMockIds.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No mock generated.</td></tr>'; return; }
         list = currentMockIds.map(id => allQuestions.find(q => q.id === id)).filter(Boolean);
+    } else if (currentMode === 'revmock') {
+        thead.innerHTML = `<tr><th class="col-check">✓</th><th class="col-id">#</th><th class="col-date">Date</th><th class="col-marks">Marks</th><th class="col-notes">Notes</th></tr>`;
+        if (currentRevMockIds.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No revision mock generated.</td></tr>'; return; }
+        list = currentRevMockIds.map(id => allQuestions.find(q => q.id === id)).filter(Boolean);
         
     } else {
         thead.innerHTML = `
@@ -755,8 +759,9 @@ window.renderTable = function() {
         if (data.done) tr.style.backgroundColor = "#e8f8f5";
         
         let nameColumn, topicColumn;
+        let hideDetails = (currentMode === 'mock') || (currentMode === 'revmock' && !revMockRevealed);
 
-        if (currentMode === 'mock' || currentMode === 'revmock') {
+        if (hideDetails) {
             nameColumn = `<td class="col-id"><span class="clickable-name" onclick="loadFromTable('${q.id}')">${index + 1}</span></td>`;
             topicColumn = ''; 
         } else {
@@ -988,14 +993,15 @@ function loadFilters() {
     }
 
     window.printMock = function() {
-        if (currentMockIds.length === 0) { alert("Generate a mock first."); return; }
+        let activeIds = currentMode === 'revmock' ? currentRevMockIds : currentMockIds;
+        if (activeIds.length === 0) { alert("Generate a mock first."); return; }
 
         let sums = { "S": 0, "1": 0, "2": 0, "3": 0 };
         let count = 0;
         
         let sourcesHtml = '<h3>Question Sources</h3><ul style="list-style:none; padding:0; font-family: \'Times New Roman\', serif; font-size: 1.1em;">';
 
-        currentMockIds.forEach((id, index) => {
+        activeIds.forEach((id, index) => {
             const q = allQuestions.find(item => item.id === id);
             
             if (q && GRADE_DATA[q.paper] && GRADE_DATA[q.paper][q.year]) {
