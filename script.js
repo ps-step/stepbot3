@@ -460,12 +460,20 @@ window.generateRevMock = function() {
     const mech = pool.filter(q => q.type === 'mechanics');
     const stats = pool.filter(q => q.type === 'stats');
 
-    if (pure.length < 8 || mech.length < 2 || stats.length < 2) {
-        alert(`Not enough qualifying older questions available!\nFound: ${pure.length} Pure (need 8), ${mech.length} Mech (need 2), ${stats.length} Stats (need 2).`);
+    // NEW LOGIC: Only block if there are ZERO questions available in total
+    if (pure.length === 0 && mech.length === 0 && stats.length === 0) {
+        alert("No qualifying older questions available at all!");
         return;
     }
 
+    // Give a gentle heads-up if it's going to be a partial paper
+    if (pure.length < 8 || mech.length < 2 || stats.length < 2) {
+        alert(`Generating a partial mock based on available questions.\nFound: ${pure.length}/8 Pure, ${mech.length}/2 Mech, ${stats.length}/2 Stats.`);
+    }
+
     function shuffle(arr) { return arr.sort(() => 0.5 - Math.random()); }
+    
+    // slice() safely grabs "up to" the amount, so missing categories just add nothing
     const selected = [...shuffle(pure).slice(0,8), ...shuffle(mech).slice(0,2), ...shuffle(stats).slice(0,2)];
     
     const typeRank = { 'pure': 1, 'mechanics': 2, 'stats': 3 };
@@ -476,7 +484,6 @@ window.generateRevMock = function() {
         return a.year - b.year || a.paper - b.paper || a.number - b.number;
     });
 
-    // Use the dedicated RevMock variable
     currentRevMockIds = selected.map(q => q.id);
     localStorage.setItem('stepBotRevMockIds', JSON.stringify(currentRevMockIds));
     
@@ -485,7 +492,6 @@ window.generateRevMock = function() {
     
     renderTable();
     startTimer(false); 
-    alert("Revision Mock generated! Original marks and notes are hidden until you click Finish Mock.");
 }
 
 window.finishRevMock = function() {
