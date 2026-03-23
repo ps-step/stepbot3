@@ -85,6 +85,14 @@
             <div class="filter-group">
                 <span style="font-weight:bold; color:#ecf0f1; margin-right:10px;">New Mock:</span>
                 
+                <label>From:</label>
+                <select id="revmock-start-year" style="width: 80px;"></select>
+                
+                <label>To:</label>
+                <select id="revmock-end-year" style="width: 80px;"></select>
+                
+                <span class="separator">|</span>
+
                 <label>Older than (days):</label>
                 <input type="number" id="revmock-days" value="30" style="width: 60px;">
                 
@@ -93,7 +101,8 @@
                 <label><input type="checkbox" id="revmock-p2" checked> P2</label>
                 <label><input type="checkbox" id="revmock-p3" checked> P3</label>
                 
-                <button class="primary" style="background-color: #8e44ad;" onclick="generateRevMock()">Generate</button>
+                <button class="primary" style="background-color: #8e44ad;" onclick="generateRevMock()">Generate Paper</button>
+                <button class="secondary" onclick="viewGradeBoundaries()">Est. Boundaries</button>
                 <button class="secondary" id="btn-finish-revmock" onclick="finishRevMock()" disabled>Finish Mock</button>
                 <button class="secondary" onclick="printMock()">Print / PDF</button>
             </div>

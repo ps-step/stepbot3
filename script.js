@@ -436,8 +436,13 @@ window.generateRevMock = function() {
     const days = isNaN(daysInput) ? 0 : daysInput;
     const useP2 = document.getElementById('revmock-p2').checked;
     const useP3 = document.getElementById('revmock-p3').checked;
+    
+    // NEW: Grab the year ranges
+    const startYear = parseInt(document.getElementById('revmock-start-year').value);
+    const endYear = parseInt(document.getElementById('revmock-end-year').value);
 
     if (!useP2 && !useP3) { alert("Select at least one paper."); return; }
+    if (startYear > endYear) { alert("Invalid year range."); return; }
 
     // Set cutoff to the very end of the day, 'days' ago
     const cutoffDate = new Date();
@@ -445,6 +450,8 @@ window.generateRevMock = function() {
     cutoffDate.setHours(23, 59, 59, 999); 
 
     let pool = allQuestions.filter(q => {
+        if (q.year < startYear || q.year > endYear) return false;
+
         if (q.paper === 2 && !useP2) return false;
         if (q.paper === 3 && !useP3) return false;
         
@@ -994,10 +1001,18 @@ function loadFilters() {
     const mockEnd = document.getElementById('mock-end-year');
     const topicSelect = document.getElementById('sel-topic');
 
+    const revmockStart = document.getElementById('revmock-start-year');
+    const revmockEnd = document.getElementById('revmock-end-year');
+
     for(let y=2008; y<=2024; y++) {
         let opt = document.createElement('option'); opt.value = y; opt.innerText = y; yearSelect.appendChild(opt);
         let optS = document.createElement('option'); optS.value = y; optS.innerText = y; mockStart.appendChild(optS);
         let optE = document.createElement('option'); optE.value = y; optE.innerText = y; if(y===2024) optE.selected=true; mockEnd.appendChild(optE);
+        
+        if (revmockStart && revmockEnd) {
+            let optRS = document.createElement('option'); optRS.value = y; optRS.innerText = y; revmockStart.appendChild(optRS);
+            let optRE = document.createElement('option'); optRE.value = y; optRE.innerText = y; if(y===2024) optRE.selected=true; revmockEnd.appendChild(optRE);
+        }
     }
 
     const topics = {
