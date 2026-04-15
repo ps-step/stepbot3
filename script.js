@@ -27,6 +27,8 @@ try {
 }
 
 // --- DATA ---
+const PDF_VERSION = "2"; // Change this number to "3", "4", etc., whenever you upload a new PDF!
+
 const GRADE_DATA = {
     2: { 2025: {"S":92,"1":75,"2":61,"3":35}, 2024: {"S":93,"1":69,"2":51,"3":26}, 2023: {"S":90,"1":65,"2":50,"3":30}, 2022: {"S":81,"1":62,"2":52,"3":28}, 2021: {"S":92,"1":67,"2":54,"3":25}, 2020: {"S":77,"1":54,"2":42,"3":30}, 2019: {"S":90,"1":68,"2":55,"3":36}, 2018: {"S":100,"1":77,"2":65,"3":34}, 2017: {"S":101,"1":80,"2":69,"3":31}, 2016: {"S":95,"1":74,"2":65,"3":30}, 2015: {"S":94,"1":68,"2":60,"3":30}, 2014: {"S":95,"1":74,"2":64,"3":30}, 2013: {"S":100,"1":79,"2":67,"3":32}, 2012: {"S":91,"1":72,"2":60,"3":31}, 2011: {"S":83,"1":62,"2":49,"3":29}, 2010: {"S":105,"1":79,"2":64,"3":40}, 2009: {"S":98,"1":71,"2":61,"3":39}, 2008: {"S":94,"1":69,"2":58,"3":35} },
     3: { 2025: {"S":86,"1":61,"2":49,"3":27}, 2024: {"S":85,"1":64,"2":54,"3":32}, 2023: {"S":82,"1":62,"2":51,"3":29}, 2022: {"S":89,"1":67,"2":54,"3":29}, 2021: {"S":92,"1":67,"2":54,"3":25}, 2020: {"S":88,"1":67,"2":53,"3":30}, 2019: {"S":77,"1":57,"2":48,"3":27}, 2018: {"S":87,"1":59,"2":49,"3":27}, 2017: {"S":95,"1":69,"2":57,"3":28}, 2016: {"S":88,"1":64,"2":55,"3":32}, 2015: {"S":88,"1":65,"2":54,"3":29}, 2014: {"S":81,"1":59,"2":48,"3":27}, 2013: {"S":85,"1":62,"2":48,"3":27}, 2012: {"S":84,"1":65,"2":53,"3":32}, 2011: {"S":91,"1":65,"2":53,"3":32}, 2010: {"S":78,"1":56,"2":46,"3":29}, 2009: {"S":95,"1":67,"2":55,"3":38}, 2008: {"S":82,"1":63,"2":52,"3":34} }
@@ -355,8 +357,8 @@ window.renderBoundaries = function() {
         [2, 3].forEach(paperNum => {
             const grades = GRADE_DATA[paperNum][y] || {S:'-',1:'-',2:'-',3:'-'};
             const paperLabel = paperNum === 2 ? "II" : "III";
-            const qpLink = `past_papers/${y}.${paperNum}.pdf`; 
-            const msLink = `mark_schemes/${y}.${paperNum}.pdf`;
+            const qpLink = `past_papers/${y}.${paperNum}.pdf?v=${PDF_VERSION}`; 
+            const msLink = `mark_schemes/${y}.${paperNum}.pdf?v=${PDF_VERSION}`;
             
             // NEW LOGIC: Hide links if the year is 2025
             let linksHtml = '';
@@ -540,8 +542,8 @@ window.viewGradeBoundaries = function() {
 window.showMarkScheme = function() {
     if (!currentQuestionId) { alert("Select a question."); return; }
     const q = allQuestions.find(i => i.id === currentQuestionId);
-    const pdfPath = `mark_schemes/${q.year}.${q.paper}.pdf`;
-    document.getElementById('pdf-title').innerText = `Mark Scheme - ${q.year} II/III`;
+    const pdfPath = `mark_schemes/${q.year}.${q.paper}.pdf?v=${PDF_VERSION}`;
+    document.getElementById('pdf-title').innerText = `Mark Scheme - ${q.year}`;
     document.getElementById('pdf-frame').src = pdfPath;
     document.getElementById('pdf-new-tab').href = pdfPath;
     document.getElementById('pdf-backdrop').style.display = 'flex';
