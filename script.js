@@ -254,7 +254,7 @@ function getQuestionType(year, number) {
 function generateQuestionList() {
     allQuestions = [];
     const papers = [2, 3];
-    for (let year = 2008; year <= 2024; year++) {
+    for (let year = 2008; year <= 2025; year++) {
         papers.forEach(paper => {
             let maxQ = (year <= 2018) ? 13 : 12; 
             for (let num = 1; num <= maxQ; num++) {
@@ -360,16 +360,10 @@ window.renderBoundaries = function() {
             const qpLink = `past_papers/${y}.${paperNum}.pdf?v=${PDF_VERSION}`; 
             const msLink = `mark_schemes/${y}.${paperNum}.pdf?v=${PDF_VERSION}`;
             
-            // NEW LOGIC: Hide links if the year is 2025
-            let linksHtml = '';
-            if (y === 2025) {
-                linksHtml = '<span style="color:#95a5a6; font-style:italic;">havent added it yet, go ocr website</span>';
-            } else {
-                linksHtml = `
-                    <a href="${qpLink}" target="_blank" style="margin-right:15px; color:#2980b9;">📝 Paper</a>
-                    <a href="${msLink}" target="_blank" style="color:#27ae60;">✅ Mark Scheme</a>
-                `;
-            }
+            let linksHtml = `
+                <a href="${qpLink}" target="_blank" style="margin-right:15px; color:#2980b9;">📝 Paper</a>
+                <a href="${msLink}" target="_blank" style="color:#27ae60;">✅ Mark Scheme</a>
+            `;
             
             html += `<tr>
                 <td style="font-weight:bold">${y}</td>
@@ -1006,14 +1000,14 @@ function loadFilters() {
     const revmockStart = document.getElementById('revmock-start-year');
     const revmockEnd = document.getElementById('revmock-end-year');
 
-    for(let y=2008; y<=2024; y++) {
+    for(let y=2008; y<=2025; y++) {
         let opt = document.createElement('option'); opt.value = y; opt.innerText = y; yearSelect.appendChild(opt);
         let optS = document.createElement('option'); optS.value = y; optS.innerText = y; mockStart.appendChild(optS);
-        let optE = document.createElement('option'); optE.value = y; optE.innerText = y; if(y===2024) optE.selected=true; mockEnd.appendChild(optE);
+        let optE = document.createElement('option'); optE.value = y; optE.innerText = y; if(y===2025) optE.selected=true; mockEnd.appendChild(optE);
         
         if (revmockStart && revmockEnd) {
             let optRS = document.createElement('option'); optRS.value = y; optRS.innerText = y; revmockStart.appendChild(optRS);
-            let optRE = document.createElement('option'); optRE.value = y; optRE.innerText = y; if(y===2024) optRE.selected=true; revmockEnd.appendChild(optRE);
+            let optRE = document.createElement('option'); optRE.value = y; optRE.innerText = y; if(y===2025) optRE.selected=true; revmockEnd.appendChild(optRE);
         }
     }
 
