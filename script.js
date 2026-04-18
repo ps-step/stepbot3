@@ -565,7 +565,12 @@ window.generateRandom = function() {
         if (q.type === 'pure' && !filters.pure) return false;
         if (q.type === 'mechanics' && !filters.mech) return false;
         if (q.type === 'stats' && !filters.stats) return false;
-        if (filters.topic !== 'all' && q.topic !== filters.topic) return false;
+        
+        if (filters.topic === 'pure_stats_no_vectors') {
+            if (q.type === 'mechanics' || q.topic === 'Vectors') return false;
+        } else if (filters.topic !== 'all' && q.topic !== filters.topic) {
+            return false;
+        }
         return true;
     });
 
@@ -692,28 +697,48 @@ window.renderTable = function() {
             if (q.type === 'pure' && !f.pure) return false;
             if (q.type === 'mechanics' && !f.mech) return false;
             if (q.type === 'stats' && !f.stats) return false;
-            if (f.topic !== 'all' && q.topic !== f.topic) return false;
+            
+            if (f.topic === 'pure_stats_no_vectors') {
+                if (q.type === 'mechanics' || q.topic === 'Vectors') return false;
+            } else if (f.topic !== 'all' && q.topic !== f.topic) {
+                return false;
+            }
             return true;
         });
     }
 
     // --- Calculate Average Mark for VISIBLE list ---
+    // --- Calculate Stats for VISIBLE list ---
     let totalMarks = 0;
     let countedQuestions = 0;
+    let totalVisible = 0;
+    let totalAttempted = 0;
 
     list.forEach(q => {
-        if (!q) return; // NEW: Skip empty question slots so it doesn't crash!
+        if (!q) return; // Skip empty question slots so it doesn't crash!
+        totalVisible++;
         
         const prog = userProgress[q.id];
-        if (prog && prog.done && prog.marks !== "" && !isNaN(prog.marks)) {
-            totalMarks += parseInt(prog.marks);
-            countedQuestions++;
+        if (prog && prog.done) {
+            totalAttempted++;
+            if (prog.marks !== "" && !isNaN(prog.marks)) {
+                totalMarks += parseInt(prog.marks);
+                countedQuestions++;
+            }
         }
     });
 
-    if (countedQuestions > 0) {
-        const avg = (totalMarks / countedQuestions).toFixed(1);
-        avgDisplay.innerText = `Avg: ${avg} / 20`;
+    if (totalVisible > 0 && (totalAttempted > 0 || countedQuestions > 0)) {
+        let statsText = [];
+        const percent = Math.round((totalAttempted / totalVisible) * 100);
+        statsText.push(`${percent}% Done`);
+        
+        if (countedQuestions > 0) {
+            const avg = (totalMarks / countedQuestions).toFixed(1);
+            statsText.push(`Avg: ${avg}/20`);
+        }
+        
+        avgDisplay.innerText = statsText.join(" | ");
         avgDisplay.style.display = 'inline-block';
     } else {
         avgDisplay.style.display = 'none';
