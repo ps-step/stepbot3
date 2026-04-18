@@ -260,7 +260,7 @@ function generateQuestionList() {
             for (let num = 1; num <= maxQ; num++) {
                 const broadType = getQuestionType(year, num);
                 const id = `${year}.${paper}.${num}`; 
-                const specificTopic = TOPIC_LOOKUP[id] || (broadType.charAt(0).toUpperCase() + broadType.slice(1));
+                const specificTopic = TOPIC_LOOKUP[id] || "-";
                 allQuestions.push({
                     id: id, year: year, paper: paper, number: num,
                     type: broadType, topic: specificTopic, filename: `${id}.png`
