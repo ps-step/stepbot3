@@ -1050,6 +1050,64 @@ function loadFilters() {
         topicSelect.appendChild(group);
     }
 
+    window.exportNotes = function() {
+    let notesByTopic = {};
+    let totalNotes = 0;
+
+    // 1. Group questions with notes by topic
+    allQuestions.forEach(q => {
+        const prog = userProgress[q.id];
+        if (prog && prog.notes && prog.notes.trim() !== "") {
+            if (!notesByTopic[q.topic]) {
+                notesByTopic[q.topic] = [];
+            }
+            notesByTopic[q.topic].push({
+                id: q.id,
+                year: q.year,
+                paper: q.paper,
+                number: q.number,
+                note: prog.notes.trim()
+            });
+            totalNotes++;
+        }
+    });
+
+    if (totalNotes === 0) {
+        alert("No notes found to export! Save some notes on your questions first.");
+        return;
+    }
+
+    // 2. Format the text
+    let outputTxt = "StepBot3 - Notes Export\n";
+    outputTxt += `Generated on: ${new Date().toLocaleDateString()}\n`;
+    outputTxt += "=========================================\n\n";
+
+    const sortedTopics = Object.keys(notesByTopic).sort();
+
+    sortedTopics.forEach(topic => {
+        outputTxt += `[ ${topic.toUpperCase()} ]\n`;
+        outputTxt += `-----------------------------------------\n`;
+        
+        notesByTopic[topic].forEach(item => {
+            const paperLabel = item.paper === 2 ? 'II' : 'III';
+            const prettyId = `${item.year} STEP ${paperLabel} Q${item.number}`;
+            outputTxt += `${prettyId}\n> ${item.note}\n\n`;
+        });
+        outputTxt += `\n`;
+    });
+
+    // 3. Trigger download
+    const blob = new Blob([outputTxt], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'StepBot3_Notes.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+};
+
     window.printMock = function() {
         let activeIds = currentMode === 'revmock' ? currentRevMockIds : currentMockIds;
         if (activeIds.length === 0) { alert("Generate a mock first."); return; }
