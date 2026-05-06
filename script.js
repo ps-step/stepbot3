@@ -1108,6 +1108,91 @@ function loadFilters() {
     URL.revokeObjectURL(url);
 };
 
+window.analyzePaperAges = function() {
+    const today = new Date();
+    const papersData = {};
+
+    // 1. Group data by paper and filter
+    allQuestions.forEach(q => {
+        if (q.year < 2016) return; // Exclude pre-2016 papers
+
+        const prog = userProgress[q.id];
+        // Only process questions that are done AND have a recorded date
+        if (prog && prog.done && prog.date) {
+            const attemptDate = new Date(prog.date);
+            if (isNaN(attemptDate)) return; 
+
+            const paperLabel = q.paper === 2 ? 'II' : 'III';
+            const paperName = `${q.year} STEP ${paperLabel}`;
+
+            if (!papersData[paperName]) {
+                papersData[paperName] = {
+                    dates: [],
+                    mostRecent: new Date(0)
+                };
+            }
+
+            // Store the date and update the "most recent" tracker
+            papersData[paperName].dates.push(attemptDate);
+            if (attemptDate > papersData[paperName].mostRecent) {
+                papersData[paperName].mostRecent = attemptDate;
+            }
+        }
+    });
+
+    // 2. Calculate the averages
+    const results = [];
+    for (const [paperName, data] of Object.entries(papersData)) {
+        // Calculate average time ago in milliseconds
+        const totalAgeMs = data.dates.reduce((sum, date) => sum + (today - date), 0);
+        const avgAgeMs = totalAgeMs / data.dates.length;
+        
+        // Convert milliseconds to days
+        const avgAgeDays = Math.round(avgAgeMs / (1000 * 60 * 60 * 24));
+        const mostRecentDaysAgo = Math.round((today - data.mostRecent) / (1000 * 60 * 60 * 24));
+
+        results.push({
+            name: paperName,
+            avgDays: avgAgeDays,
+            mostRecentDate: data.mostRecent.toLocaleDateString(),
+            mostRecentDays: mostRecentDaysAgo,
+            qCount: data.dates.length
+        });
+    }
+
+    if (results.length === 0) {
+        alert("No attempted questions found from 2016 onwards with valid dates!");
+        return;
+    }
+
+    // 3. Sort the results (Oldest average age at the top)
+    results.sort((a, b) => b.avgDays - a.avgDays);
+
+    // 4. Format the output text
+    let outputTxt = "StepBot3 - Paper Age Analysis (2016 Onwards)\n";
+    outputTxt += `Generated on: ${today.toLocaleDateString()}\n`;
+    outputTxt += "Ordered by Average Time Ago (Oldest First)\n";
+    outputTxt += "=======================================================\n\n";
+
+    results.forEach(r => {
+        outputTxt += `[ ${r.name} ] - ${r.qCount} questions attempted\n`;
+        outputTxt += `Average time ago: ${r.avgDays} days\n`;
+        outputTxt += `Most recent attempt: ${r.mostRecentDate} (${r.mostRecentDays} days ago)\n`;
+        outputTxt += `-------------------------------------------------------\n\n`;
+    });
+
+    // 5. Trigger the file download
+    const blob = new Blob([outputTxt], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'StepBot3_Paper_Ages.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+};
+
     window.printMock = function() {
         let activeIds = currentMode === 'revmock' ? currentRevMockIds : currentMockIds;
         if (activeIds.length === 0) { alert("Generate a mock first."); return; }

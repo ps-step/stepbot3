@@ -422,10 +422,14 @@
                     </li>
                 </ul>
                 
+                <!-- NEW EXPORT SECTION -->
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
                     <h3>Export Your Data</h3>
-                    <p>Download a clean text file containing all the notes you've written, categorized by topic.</p>
-                    <button class="primary" style="background-color: #2ecc71;" onclick="exportNotes()">Download Notes (.txt)</button>
+                    <p>Download your notes, or analyze your past paper history to find which papers you haven't touched in the longest time.</p>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="primary" style="background-color: #2ecc71;" onclick="exportNotes()">Download Notes (.txt)</button>
+                        <button class="primary" style="background-color: #3498db;" onclick="analyzePaperAges()">Analyze Paper Ages (.txt)</button>
+                    </div>
                 </div>
 
                 <div style="height: 100px;"></div>
